@@ -1,0 +1,43 @@
+<!-- C:\Projetos\App_relatorio\meu-painel-frontend\index.html-->
+<!doctype html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Salgados O Fabuloso</title>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            jockey: ['"Jockey One"', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+
+
+  <!-- Manifest -->
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#641305" />
+
+  <!-- Ícone -->
+  <link rel="icon" href="/public/icons/Aicon-192x192.png" type="image/png" />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jockey+One&display=swap" rel="stylesheet">
+
+
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.jsx"></script>
+</body>
+
+</html>

@@ -2,9 +2,7 @@
 import axios from 'axios';
 
 // 🔹 IP fixo da tua rede (não usa localhost, senão perde o cookie)
-const DEV_API = 'http://192.168.15.7:8000/api';
-const API_BASE =
-  import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') || DEV_API;
+const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
 const djangoApi = axios.create({
   baseURL: API_BASE,

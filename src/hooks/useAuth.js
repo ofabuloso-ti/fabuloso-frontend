@@ -1,6 +1,6 @@
 // src/hooks/useAuth.js
 import { useState } from 'react';
-import djangoApi, { ensureCsrf } from '../api/djangoApi';
+import djangoApi from '../api/djangoApi';
 
 export const useAuth = () => {
   const [user, setUser] = useState(null);
@@ -9,8 +9,7 @@ export const useAuth = () => {
   // --- LOGIN ---
   const login = async (username, password) => {
     try {
-      // garante que o cookie csrftoken já foi emitido
-      await ensureCsrf();
+      // 🔥 Removido ensureCsrf()
 
       // faz login -> backend cria o sessionid
       await djangoApi.post('/auth/login/', { username, password });
@@ -21,7 +20,7 @@ export const useAuth = () => {
 
       setError(null);
       console.log('Login realizado com sucesso!');
-      return userResp.data; // 👈 importante: devolve o usuário
+      return userResp.data;
     } catch (err) {
       console.error('Erro no login:', err.response?.data || err.message);
       setError('Usuário ou senha inválidos');

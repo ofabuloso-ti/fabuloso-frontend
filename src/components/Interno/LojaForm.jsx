@@ -25,45 +25,18 @@ function LojaForm({ onSave, onCancel, existingLoja = null }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(null);
-
-    if (!formData.nome.trim()) {
-      setError('Por favor, preencha o nome da loja.');
-      return;
-    }
-
     try {
-      let response;
-      if (existingLoja) {
-        response = await djangoApi.put(`/lojas/${existingLoja.id}/`, formData);
+      const userData = await login(username, password);
+
+      console.log('Login OK:', userData);
+
+      if (userData.user_type === 'admin') {
+        navigate('/interno'); // painel do admin
       } else {
-        response = await djangoApi.post('/lojas/', formData);
+        navigate('/funcionario'); // painel do funcionário
       }
-      onSave(response.data);
     } catch (err) {
-      console.error('Erro ao salvar loja:', err.response?.data || err);
-      const serverErrors = err.response?.data;
-      let errorMessage =
-        'Erro ao salvar loja. Verifique os campos e tente novamente.';
-      if (serverErrors) {
-        if (serverErrors.detail) {
-          errorMessage = `Erro: ${serverErrors.detail}`;
-        } else if (serverErrors.non_field_errors) {
-          errorMessage = `Erro: ${serverErrors.non_field_errors.join(', ')}`;
-        } else {
-          errorMessage = Object.keys(serverErrors)
-            .map((field) => {
-              const fieldName = field.charAt(0).toUpperCase() + field.slice(1);
-              return `${fieldName}: ${
-                Array.isArray(serverErrors[field])
-                  ? serverErrors[field].join(', ')
-                  : serverErrors[field]
-              }`;
-            })
-            .join('; ');
-        }
-      }
-      setError(errorMessage);
+      console.error('Falha no login');
     }
   };
 

@@ -21,7 +21,7 @@ export const useAuth = () => {
 
       setError(null);
       console.log('Login realizado com sucesso!');
-      return userResp.data;
+      return userResp.data; // 👈 importante: devolve o usuário
     } catch (err) {
       console.error('Erro no login:', err.response?.data || err.message);
       setError('Usuário ou senha inválidos');

@@ -31,7 +31,7 @@ function FuncionarioForm({ onSave, onCancel, existingFuncionario = null }) {
           username: existingFuncionario.username || '',
           email: existingFuncionario.email || '',
           user_type: existingFuncionario.user_type || 'funcionario',
-          loja: existingFuncionario.loja?.id || existingFuncionario.loja || '', // <- garante ID
+          loja: existingFuncionario.loja?.id || existingFuncionario.loja || '',
           password: '',
         });
       }
@@ -45,6 +45,13 @@ function FuncionarioForm({ onSave, onCancel, existingFuncionario = null }) {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+
+    // Resetar loja quando trocar para admin
+    if (name === 'user_type' && value === 'admin') {
+      setFormData((prev) => ({ ...prev, user_type: value, loja: '' }));
+      return;
+    }
+
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -52,31 +59,50 @@ function FuncionarioForm({ onSave, onCancel, existingFuncionario = null }) {
     e.preventDefault();
     setError(null);
 
+    // VALIDAÇÃO CORRIGIDA
     if (
       !formData.username ||
       !formData.user_type ||
-      !formData.loja ||
       (!existingFuncionario && !formData.password)
     ) {
       setError(
-        'Por favor, preencha todos os campos obrigatórios (Nome de usuário, Tipo de acesso, Loja, e Senha para novos usuários).',
+        'Por favor, preencha os campos obrigatórios (Nome de usuário, Tipo de acesso e Senha para novos usuários).',
       );
       return;
+    }
+
+    // LOJA SÓ É OBRIGATÓRIA PARA FUNCIONÁRIO
+    if (formData.user_type === 'funcionario' && !formData.loja) {
+      setError('Funcionários precisam estar vinculados a uma loja.');
+      return;
+    }
+
+    // MONTA BODY DINAMICAMENTE
+    let dataToSubmit = {
+      username: formData.username,
+      email: formData.email,
+      user_type: formData.user_type,
+    };
+
+    // Só adiciona loja se for funcionário
+    if (formData.user_type === 'funcionario') {
+      dataToSubmit.loja = formData.loja;
+    }
+
+    // Só adiciona senha se tiver sido digitada
+    if (formData.password) {
+      dataToSubmit.password = formData.password;
     }
 
     try {
       let response;
       if (existingFuncionario) {
-        const dataToSubmit = { ...formData };
-        if (!dataToSubmit.password) {
-          delete dataToSubmit.password;
-        }
         response = await djangoApi.put(
           `/users/${existingFuncionario.id}/`,
           dataToSubmit,
         );
       } else {
-        response = await djangoApi.post('/users/', formData);
+        response = await djangoApi.post('/users/', dataToSubmit);
       }
       onSave(response.data);
     } catch (err) {
@@ -84,6 +110,7 @@ function FuncionarioForm({ onSave, onCancel, existingFuncionario = null }) {
       const serverErrors = err.response?.data;
       let errorMessage =
         'Erro ao salvar funcionário. Verifique os campos e tente novamente.';
+
       if (serverErrors) {
         if (serverErrors.detail) {
           errorMessage = `Erro: ${serverErrors.detail}`;
@@ -203,25 +230,28 @@ function FuncionarioForm({ onSave, onCancel, existingFuncionario = null }) {
               </select>
             </label>
 
-            <label className="block">
-              <span className="text-gray-700 font-medium">
-                Loja<span className="text-red-600">*</span>:
-              </span>
-              <select
-                name="loja"
-                value={formData.loja}
-                onChange={handleInputChange}
-                required
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm bg-white focus:border-[#d20000] focus:ring focus:ring-[#d20000]/50"
-              >
-                <option value="">Selecione uma Loja</option>
-                {lojas.map((loja) => (
-                  <option key={loja.id} value={loja.id}>
-                    {loja.nome}
-                  </option>
-                ))}
-              </select>
-            </label>
+            {/* MOSTRA LOJA SÓ PARA FUNCIONÁRIO */}
+            {formData.user_type === 'funcionario' && (
+              <label className="block">
+                <span className="text-gray-700 font-medium">
+                  Loja<span className="text-red-600">*</span>:
+                </span>
+                <select
+                  name="loja"
+                  value={formData.loja}
+                  onChange={handleInputChange}
+                  required={formData.user_type === 'funcionario'} // obrigatório só para funcionário
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm bg-white focus:border-[#d20000] focus:ring focus:ring-[#d20000]/50"
+                >
+                  <option value="">Selecione uma Loja</option>
+                  {lojas.map((loja) => (
+                    <option key={loja.id} value={loja.id}>
+                      {loja.nome}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
           </div>
         </fieldset>
 

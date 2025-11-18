@@ -49,6 +49,5 @@ export const useAuth = () => {
       setUser(null);
     }
   };
-
   return { user, error, login, logout, fetchCurrentUser };
 };

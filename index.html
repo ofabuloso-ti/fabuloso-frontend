@@ -7,38 +7,23 @@
 
   <title>Salgados O Fabuloso</title>
 
-  <!-- 🔥 ADICIONE ESTE SCRIPT ANTES DE CONFIGURAR O TAILWIND -->
-  <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- 🔥 Agora sim você pode usar tailwind.config -->
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            jockey: ['"Jockey One"', 'sans-serif'],
-          }
-        }
-      }
-    }
-  </script>
-
-  <!-- Manifest -->
+  <!-- SEO e Manifest -->
   <link rel="manifest" href="/manifest.json" />
   <meta name="theme-color" content="#641305" />
 
   <!-- Ícone -->
-  <link rel="icon" href="/public/icons/Aicon-192x192.png" type="image/png" />
+  <link rel="icon" href="/icons/Aicon-192x192.png" type="image/png" />
 
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Jockey+One&display=swap" rel="stylesheet">
-
 </head>
 
 <body>
   <div id="root"></div>
+
+  <!-- Entrada da aplicação Vite -->
   <script type="module" src="/src/main.jsx"></script>
 </body>
 

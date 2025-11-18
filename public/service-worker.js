@@ -1,35 +1,34 @@
 // public/service-worker.js
-const CACHE_NAME = 'meu-painel-cache-v1';
-const urlsToCache = [
+
+const CACHE_NAME = 'fabuloso-v1';
+const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/App.css',
-  '/src/main.jsx',
   '/icons/Aicon-192x192.png',
   '/icons/Aicon-512x512.png',
 ];
 
-// Durante a instalação, abrir cache e adicionar os arquivos
+// Instala o SW e salva apenas os arquivos estáticos garantidos
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[ServiceWorker] Cacheando arquivos...');
-      return cache.addAll(urlsToCache);
+      console.log('[SW] Cache inicial...');
+      return cache.addAll(STATIC_ASSETS);
     }),
   );
   self.skipWaiting();
 });
 
-// Ativar Service Worker e limpar caches antigos
+// Remove caches antigos
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((cacheNames) =>
+    caches.keys().then((keys) =>
       Promise.all(
-        cacheNames.map((cache) => {
-          if (cache !== CACHE_NAME) {
-            console.log('[ServiceWorker] Removendo cache antigo:', cache);
-            return caches.delete(cache);
+        keys.map((key) => {
+          if (key !== CACHE_NAME) {
+            console.log('[SW] Removendo cache antigo:', key);
+            return caches.delete(key);
           }
         }),
       ),
@@ -38,11 +37,12 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Interceptar requisições e responder do cache se possível
+// Estratégia: NETWORK FIRST para tudo que não é estático
 self.addEventListener('fetch', (event) => {
+  // Não interceptar API para evitar interferência no login/logout
+  if (event.request.url.includes('/api/')) return;
+
   event.respondWith(
-    caches.match(event.request).then((response) => {
-      return response || fetch(event.request);
-    }),
+    fetch(event.request).catch(() => caches.match(event.request)),
   );
 });

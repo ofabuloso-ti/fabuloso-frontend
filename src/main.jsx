@@ -7,7 +7,9 @@ import { BrowserRouter } from 'react-router-dom';
 import App from './App.jsx';
 import './App.css';
 
-ReactDOM.createRoot(document.getElementById('root')).render(
+const root = ReactDOM.createRoot(document.getElementById('root'));
+
+root.render(
   <React.StrictMode>
     <BrowserRouter>
       <App />
@@ -15,11 +17,11 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   </React.StrictMode>,
 );
 
-// Registrar Service Worker (PWA)
+//Registrar Service Worker corretamente no Vite
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker
-      .register('/service-worker.js')
+      .register('/service-worker.js', { scope: '/' })
       .then((registration) => {
         console.log('✅ Service Worker registrado com sucesso:', registration);
       })

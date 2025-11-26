@@ -37,15 +37,17 @@ const AdminDashboardCompleto = () => {
 
   const asStrDate = (d) => dayjs(d).format('YYYY-MM-DD');
 
-  // --- Buscar lojas ---
+  // -------------------- Buscar Lojas --------------------
   useEffect(() => {
     const fetchLojas = async () => {
       try {
         const res = await djangoApi.get('/lojas/');
         const lista = Array.isArray(res.data) ? res.data : [];
         setLojas(lista);
-        if (!selectedLoja && lista.length > 0)
+
+        if (!selectedLoja && lista.length > 0) {
           setSelectedLoja(String(lista[0].id));
+        }
       } catch (err) {
         console.error('Erro ao buscar lojas:', err);
         setLojas([]);
@@ -54,10 +56,11 @@ const AdminDashboardCompleto = () => {
     fetchLojas();
   }, []);
 
-  // --- Buscar relatórios, usuários, vendas e faturamento ---
+  // -------------------- Buscar Dados --------------------
   useEffect(() => {
     const fetchAll = async () => {
       if (!selectedLoja) return;
+
       setLoading(true);
       try {
         const [relRes, usrRes, venRes, fatRes] = await Promise.all([
@@ -68,20 +71,24 @@ const AdminDashboardCompleto = () => {
         ]);
 
         let rels = Array.isArray(relRes.data) ? relRes.data : [];
+
         rels = rels.filter((r) => {
           const lojaId = r?.loja?.id || r?.loja;
           return String(lojaId) === String(selectedLoja);
         });
+
         setRelatorios(rels);
         setUsuarios(Array.isArray(usrRes.data) ? usrRes.data : []);
 
-        // --- Vendas por dia ---
+        // ----------- Vendas por dia -----------
         const vendasRaw = Array.isArray(venRes.data) ? venRes.data : [];
         const vendasPorDia = {};
+
         vendasRaw.forEach((v) => {
           const dia = asStrDate(v.data);
           if (!vendasPorDia[dia])
             vendasPorDia[dia] = { data: dia, porta: 0, entrega: 0 };
+
           if (typeof v.porta === 'number' || typeof v.entrega === 'number') {
             vendasPorDia[dia].porta += Number(v.porta) || 0;
             vendasPorDia[dia].entrega += Number(v.entrega) || 0;
@@ -92,35 +99,39 @@ const AdminDashboardCompleto = () => {
               vendasPorDia[dia].entrega += Number(v.total) || 0;
           }
         });
+
         setVendasData(
           Object.values(vendasPorDia).sort((a, b) =>
             a.data > b.data ? 1 : -1,
           ),
         );
 
-        // --- Faturamento ---
+        // ----------- Faturamento por dia -----------
         const fatRaw = Array.isArray(fatRes.data) ? fatRes.data : [];
+
         setFaturamentoData(
-          fatRaw.map((item) => ({
-            data: asStrDate(item.data),
-            faturamento: Number(item.faturamento) || 0,
+          fatRaw.map((i) => ({
+            data: asStrDate(i.data),
+            faturamento: Number(i.faturamento) || 0,
           })),
         );
       } catch (err) {
-        console.error('Erro ao carregar dados do dashboard:', err);
+        console.error('Erro ao carregar dashboard:', err);
       } finally {
         setLoading(false);
       }
     };
+
     fetchAll();
   }, [selectedLoja]);
 
-  // --- Cancelamentos por dia (gráfico de linha) ---
+  // -------------------- Cancelamentos por Dia --------------------
   const cancelamentosPorDia = useMemo(() => {
     const mapa = {};
     relatorios.forEach((rel) => {
       const dia = dayjs(rel.data).format('YYYY-MM-DD');
       if (!mapa[dia]) mapa[dia] = { data: dia };
+
       if (Array.isArray(rel.cancelamentos)) {
         rel.cancelamentos.forEach((c) => {
           const motivo = c.motivo_cancelamento || 'Não informado';
@@ -131,7 +142,18 @@ const AdminDashboardCompleto = () => {
     return Object.values(mapa).sort((a, b) => (a.data > b.data ? 1 : -1));
   }, [relatorios]);
 
-  // --- Cancelamentos do dia atual (gráfico de pizza) ---
+  // ------------- EXTRAÇÃO DAS CHAVES (motivos) -------------
+  const todasAsChavesCancelamento = useMemo(() => {
+    const chaves = new Set();
+    cancelamentosPorDia.forEach((dia) => {
+      Object.keys(dia)
+        .filter((k) => k !== 'data')
+        .forEach((motivo) => chaves.add(motivo));
+    });
+    return Array.from(chaves);
+  }, [cancelamentosPorDia]);
+
+  // -------------------- Cancelamentos de HOJE --------------------
   const cancelamentosHoje = useMemo(() => {
     const hoje =
       relatorios.length > 0
@@ -139,6 +161,7 @@ const AdminDashboardCompleto = () => {
         : dayjs().format('YYYY-MM-DD');
 
     const mapa = {};
+
     relatorios.forEach((rel) => {
       const dia = dayjs(rel.data).format('YYYY-MM-DD');
       if (dia === hoje && Array.isArray(rel.cancelamentos)) {
@@ -148,34 +171,41 @@ const AdminDashboardCompleto = () => {
         });
       }
     });
+
     return Object.entries(mapa).map(([name, value]) => ({ name, value }));
   }, [relatorios]);
 
-  // --- Valor de prejuízo acumulado (últimos 30 dias) ---
+  // -------------------- Prejuízo --------------------
   const prejuizoTotal30Dias = useMemo(() => {
     const limite = dayjs().subtract(30, 'day');
     let total = 0;
+
     relatorios.forEach((rel) => {
-      if (dayjs(rel.data).isAfter(limite) && Array.isArray(rel.cancelamentos)) {
-        rel.cancelamentos.forEach((c) => {
+      if (dayjs(rel.data).isAfter(limite)) {
+        rel.cancelamentos?.forEach((c) => {
           if (c.gerou_prejuizo) total += Number(c.valor_prejuizo) || 0;
         });
       }
     });
+
     return total;
   }, [relatorios]);
 
-  // --- Status dos relatórios ---
+  // -------------------- Status --------------------
   const pieData = useMemo(() => {
     const porStatus = relatorios.reduce((acc, rel) => {
       const key = rel.status || 'Indefinido';
       acc[key] = (acc[key] || 0) + 1;
       return acc;
     }, {});
-    return Object.entries(porStatus).map(([name, value]) => ({ name, value }));
+
+    return Object.entries(porStatus).map(([name, value]) => ({
+      name,
+      value,
+    }));
   }, [relatorios]);
 
-  // --- Erro de hoje ---
+  // -------------------- Erro do dia --------------------
   const erroHoje = useMemo(() => {
     const hoje =
       relatorios.length > 0
@@ -185,46 +215,50 @@ const AdminDashboardCompleto = () => {
     const relHoje = relatorios.find(
       (r) => dayjs(r.data).format('YYYY-MM-DD') === hoje,
     );
+
     return relHoje?.erros_detalhes || null;
   }, [relatorios]);
 
-  // --- Não Conformidades do dia atual ---
+  // -------------------- Não Conformidades HOJE --------------------
   const errosDataHoje = useMemo(() => {
     const hoje =
       relatorios.length > 0
         ? dayjs(relatorios[0].data).format('YYYY-MM-DD')
         : dayjs().format('YYYY-MM-DD');
 
-    const errosMap = {};
+    const mapa = {};
+
     relatorios.forEach((rel) => {
-      const dataRel = dayjs(rel.data).format('YYYY-MM-DD');
-      if (dataRel === hoje && Array.isArray(rel.nao_conformidades)) {
-        rel.nao_conformidades.forEach((n) => {
-          errosMap[n.item_nao_conforme] =
-            (errosMap[n.item_nao_conforme] || 0) + (Number(n.quantidade) || 0);
+      if (dayjs(rel.data).format('YYYY-MM-DD') === hoje) {
+        rel.nao_conformidades?.forEach((n) => {
+          mapa[n.item_nao_conforme] =
+            (mapa[n.item_nao_conforme] || 0) + Number(n.quantidade || 0);
         });
       }
     });
-    return Object.entries(errosMap).map(([name, value]) => ({ name, value }));
+
+    return Object.entries(mapa).map(([name, value]) => ({ name, value }));
   }, [relatorios]);
 
-  // --- Histórico de Não Conformidades ---
+  // -------------------- Histórico de Erros --------------------
   const errosHistoricoData = useMemo(() => {
-    const porDia = {};
+    const mapa = {};
 
     relatorios.forEach((rel) => {
       const dia = dayjs(rel.data).format('YYYY-MM-DD');
-      if (!porDia[dia]) porDia[dia] = { data: dia, erros: 0 };
+      if (!mapa[dia]) mapa[dia] = { data: dia, erros: 0 };
 
-      if (Array.isArray(rel.nao_conformidades)) {
-        rel.nao_conformidades.forEach((n) => {
-          porDia[dia].erros += Number(n.quantidade) || 0;
-        });
-      }
+      rel.nao_conformidades?.forEach((n) => {
+        mapa[dia].erros += Number(n.quantidade) || 0;
+      });
     });
 
-    return Object.values(porDia).sort((a, b) => (a.data > b.data ? 1 : -1));
+    return Object.values(mapa).sort((a, b) => (a.data > b.data ? 1 : -1));
   }, [relatorios]);
+
+  // ==============================================================
+  // ========================   JSX   ==============================
+  // ==============================================================
 
   return (
     <section className="px-4 sm:px-6 lg:px-8 py-6">
@@ -232,7 +266,7 @@ const AdminDashboardCompleto = () => {
         Dashboard
       </h2>
 
-      {/* Filtro de lojas */}
+      {/* -------------------- Filtro de Lojas -------------------- */}
       <div className="mb-6 flex justify-center">
         <select
           className="p-2 border rounded-lg shadow min-w-[180px]"
@@ -259,7 +293,7 @@ const AdminDashboardCompleto = () => {
         </div>
       )}
 
-      {/* Cards rápidos */}
+      {/* -------------------- Cards Rápidos -------------------- */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-10">
         {[
           {
@@ -298,9 +332,9 @@ const AdminDashboardCompleto = () => {
         ))}
       </div>
 
-      {/* Gráficos */}
+      {/* -------------------- Gráficos -------------------- */}
       <div className="flex flex-col gap-6 mb-10">
-        {/* Faturamento diário */}
+        {/* -------- Faturamento Diário -------- */}
         <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 overflow-x-auto">
           <h3 className="text-lg sm:text-xl font-semibold mb-4 text-[#d20000]">
             Faturamento Diário
@@ -310,7 +344,7 @@ const AdminDashboardCompleto = () => {
               <LineChart data={faturamentoData}>
                 <XAxis dataKey="data" stroke="#d20000" />
                 <YAxis stroke="#d20000" />
-                <Tooltip formatter={(value) => moeda(value)} />
+                <Tooltip formatter={(v) => moeda(v)} />
                 <Legend />
                 <Line
                   type="monotone"
@@ -323,7 +357,7 @@ const AdminDashboardCompleto = () => {
           </div>
         </div>
 
-        {/* Vendas por dia */}
+        {/* -------- Vendas Diário -------- */}
         <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 overflow-x-auto">
           <h3 className="text-lg sm:text-xl font-semibold mb-4 text-[#d20000]">
             Vendas Retiradas e Entregas por Dia
@@ -352,11 +386,12 @@ const AdminDashboardCompleto = () => {
           </div>
         </div>
 
-        {/* CANCELAMENTOS POR DIA */}
+        {/* -------- CANCELAMENTOS POR DIA (Linha) -------- */}
         <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 overflow-x-auto">
           <h3 className="text-lg sm:text-xl font-semibold mb-4 text-[#d20000]">
             Cancelamentos por Dia
           </h3>
+
           {cancelamentosPorDia.length === 0 ? (
             <p className="text-center text-gray-500">
               Nenhum cancelamento registrado.
@@ -369,24 +404,23 @@ const AdminDashboardCompleto = () => {
                   <YAxis allowDecimals={false} stroke="#d20000" />
                   <Tooltip />
                   <Legend />
-                  {Object.keys(cancelamentosPorDia[0])
-                    .filter((k) => k !== 'data')
-                    .map((motivo, i) => (
-                      <Line
-                        key={motivo}
-                        type="monotone"
-                        dataKey={motivo}
-                        stroke={COLORS[i % COLORS.length]}
-                        name={motivo}
-                      />
-                    ))}
+
+                  {todasAsChavesCancelamento.map((motivo, i) => (
+                    <Line
+                      key={motivo}
+                      type="monotone"
+                      dataKey={motivo}
+                      stroke={COLORS[i % COLORS.length]}
+                      name={motivo}
+                    />
+                  ))}
                 </LineChart>
               </ResponsiveContainer>
             </div>
           )}
         </div>
 
-        {/* CANCELAMENTOS DO DIA ATUAL (PIE) */}
+        {/* -------- CANCELAMENTOS HOJE (PIE) -------- */}
         <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 overflow-x-auto">
           <h3 className="text-lg sm:text-xl font-semibold mb-4 text-[#d20000]">
             Cancelamentos de Hoje
@@ -422,7 +456,7 @@ const AdminDashboardCompleto = () => {
           )}
         </div>
 
-        {/* Erros do Dia Atual */}
+        {/* -------- Erros do dia -------- */}
         <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
           <h3 className="text-lg sm:text-xl font-semibold mb-4 text-[#d20000]">
             Erros do Dia
@@ -438,7 +472,7 @@ const AdminDashboardCompleto = () => {
           )}
         </div>
 
-        {/* Não conformidade diario*/}
+        {/* -------- Não Conformidades HOJE -------- */}
         <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 overflow-x-auto">
           <h3 className="text-lg sm:text-xl font-semibold mb-4 text-[#d20000]">
             Não Conformidades (Hoje)
@@ -473,7 +507,7 @@ const AdminDashboardCompleto = () => {
           )}
         </div>
 
-        {/* Histórico de Não Conformidades */}
+        {/* -------- Histórico Não Conformidades -------- */}
         <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 overflow-x-auto">
           <h3 className="text-lg sm:text-xl font-semibold mb-4 text-[#d20000]">
             Histórico de Não Conformidades

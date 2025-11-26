@@ -133,7 +133,11 @@ const AdminDashboardCompleto = () => {
 
   // --- Cancelamentos do dia atual (gráfico de pizza) ---
   const cancelamentosHoje = useMemo(() => {
-    const hoje = dayjs().format('YYYY-MM-DD');
+    const hoje =
+      relatorios.length > 0
+        ? dayjs(relatorios[0].data).format('YYYY-MM-DD')
+        : dayjs().format('YYYY-MM-DD');
+
     const mapa = {};
     relatorios.forEach((rel) => {
       const dia = dayjs(rel.data).format('YYYY-MM-DD');
@@ -173,7 +177,11 @@ const AdminDashboardCompleto = () => {
 
   // --- Erro de hoje ---
   const erroHoje = useMemo(() => {
-    const hoje = dayjs().format('YYYY-MM-DD');
+    const hoje =
+      relatorios.length > 0
+        ? dayjs(relatorios[0].data).format('YYYY-MM-DD')
+        : dayjs().format('YYYY-MM-DD');
+
     const relHoje = relatorios.find(
       (r) => dayjs(r.data).format('YYYY-MM-DD') === hoje,
     );
@@ -182,7 +190,11 @@ const AdminDashboardCompleto = () => {
 
   // --- Não Conformidades do dia atual ---
   const errosDataHoje = useMemo(() => {
-    const hoje = dayjs().format('YYYY-MM-DD');
+    const hoje =
+      relatorios.length > 0
+        ? dayjs(relatorios[0].data).format('YYYY-MM-DD')
+        : dayjs().format('YYYY-MM-DD');
+
     const errosMap = {};
     relatorios.forEach((rel) => {
       const dataRel = dayjs(rel.data).format('YYYY-MM-DD');

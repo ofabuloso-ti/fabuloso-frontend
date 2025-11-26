@@ -11,13 +11,13 @@ const productsFrito = [
   {
     title: 'Mini Pastéis',
     description:
-      'Pastéis crocantes e recheados com carne, queijo ou frango. Uma opção prática e deliciosa para qualquer ocasião.',
+      'Nossos mini pastéis trazem o equilíbrio perfeito entre crocância e recheio. Leves, dourados e com massa fininha, são ideais para servir em festas, eventos ou no dia a dia. Cada unidade possui cerca de 20g e está disponível nos sabores carne, queijo e frango. Uma opção prática, saborosa e versátil, que conquista pelo sabor e pela textura irresistível.',
     img: '/assets/home/minipasteis.png',
   },
   {
     title: 'Mini Churros',
     description:
-      'Mini Churros recheados com doce de leite. Crocante por fora, cremoso por dentro. Ideal para adoçar festas, eventos ou servir como mimo irresistível.',
+      'Os nossos mini churros são feitos com massa leve e crocante, criando a combinação perfeita com o recheio cremoso de doce de leite. Com aproximadamente 20g cada, são ideais para adoçar festas, eventos, cafés ou oferecer como mimo especial aos clientes. Uma sobremesa prática, deliciosa e irresistível em qualquer ocasião.',
     img: '/assets/home/minichurros.png',
   },
 ];

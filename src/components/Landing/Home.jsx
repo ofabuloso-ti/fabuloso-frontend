@@ -159,8 +159,8 @@ export default function Home() {
       </header>
 
       {/* CARDS */}
-      <section className="bg-[#FFBB00] py-12">
-        <div className="max-w-6xl mx-auto px-4 grid gap-8 md:grid-cols-3 text-white">
+      <section className="bg-[#FFBB00] py-16">
+        <div className="max-w-6xl mx-auto px-4 grid gap-10 md:grid-cols-3">
           {[
             {
               title: 'FEITO PARA IMPRESSIONAR',
@@ -177,19 +177,29 @@ export default function Home() {
           ].map((card, i) => (
             <div
               key={i}
-              className="bg-[#FFA600] p-6 rounded-2xl shadow-lg border border-white"
+              className="
+          bg-[#E89600]/90 
+          p-8 
+          rounded-3xl 
+          shadow-xl 
+          border border-white/20 
+          backdrop-blur-sm
+          hover:scale-[1.02] 
+          transition-transform 
+          duration-300
+        "
             >
               {/* Título com Jockey One */}
-              <h3 className="font-jockey text-2xl font-bold mb-4 tracking-widest">
+              <h3 className="font-jockey text-[26px] font-bold mb-4 leading-tight tracking-wide text-white">
                 {card.title}
               </h3>
 
-              {/* Texto com Roboto (default do body) */}
-              <p className="font-roboto text-[16px] leading-relaxed">
+              {/* Texto mais legível (cinza escuro) */}
+              <p className="font-roboto text-[18px] leading-relaxed text-[#222]">
                 {card.text}
               </p>
 
-              <div className="text-right mt-4 text-xl">→</div>
+              <div className="text-right mt-6 text-2xl text-white">→</div>
             </div>
           ))}
         </div>
@@ -237,27 +247,39 @@ export default function Home() {
 
       {/* PRODUTOS */}
       <section className="bg-[#E20613] text-white px-4 md:px-8 py-12">
-        {/* Título */}
+        {/* Título principal */}
         <div className="text-center mb-8 font-jockey">
           <h3 className="text-4xl">NOSSOS PRODUTOS</h3>
-          <h2 className="text-[48px] md:text-[88px] leading-tight mt-4">
+          <h2 className="text-[48px] md:text-[88px] leading-tight mt-2">
             ESCOLHA O MELHOR PARA SEUS <br /> CLIENTES
           </h2>
         </div>
 
-        {/* Fritos */}
-        <div className="flex flex-col items-center justify-center text-center text-white mt-10 mb-2 font-jockey">
-          <h2 className="text-[30px] font-bold uppercase mb-1">Fritos</h2>
-          <hr className="border-white w-[80%] md:w-full my-1" />
-        </div>
-        <CarouselFrito />
+        {/* ========================= FRITOS ========================= */}
+        <div className="w-full flex flex-col items-center text-center font-jockey mt-4">
+          {/* Linha premium */}
+          <hr className="border-white/30 w-full mb-6" />
 
-        {/* Assados */}
-        <div className="flex flex-col items-center justify-center text-center text-white mt-10 mb-2 font-jockey">
-          <h2 className="text-[30px] font-bold uppercase mb-1">Assados</h2>
-          <hr className="border-white w-[80%] md:w-full my-1" />
+          {/* Título premium */}
+          <h2 className="text-[38px] md:text-[50px] font-bold uppercase tracking-[2px] mb-2">
+            Fritos
+          </h2>
         </div>
-        <CarouselAssado />
+
+        <CarouselFrito className="mt-0" />
+
+        {/* ========================= ASSADOS ========================= */}
+        <div className="w-full flex flex-col items-center text-center font-jockey mt-12">
+          {/* Linha premium */}
+          <hr className="border-white/30 w-full mb-6" />
+
+          {/* Título premium */}
+          <h2 className="text-[38px] md:text-[50px] font-bold uppercase tracking-[2px] mb-2">
+            Assados
+          </h2>
+        </div>
+
+        <CarouselAssado className="mt-0" />
       </section>
 
       {/* REVENDA */}

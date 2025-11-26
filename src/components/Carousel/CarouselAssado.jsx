@@ -5,13 +5,13 @@ const productsAssado = [
   {
     title: 'Empadas',
     description:
-      'Empadas assadas com massa amanteigada e recheios generosos de frango ou palmito. Perfeitas para festas ou revenda.',
+      'Nossas mini empadas são assadas com massa amanteigada, fina e delicada, recheadas de forma generosa com frango ou palmito. Cada unidade tem aproximadamente 20g, tornando-se ideais para eventos, recepções ou revendas. Uma opção elegante, saborosa e prática, com aquele sabor caseiro que agrada a todos.',
     img: '/assets/home/empada.png',
   },
   {
     title: 'Esfihas',
     description:
-      'Mini esfihas com massa fofinha e recheios de carne ou frango. Uma opção deliciosa para qualquer ocasião.',
+      'As mini esfihas possuem massa fofinha e levemente dourada, recheada com carne ou frango de forma generosa e saborosa. Com cerca de 20g por unidade, são perfeitas para festas, cafés, lanches rápidos ou revenda. Práticas, macias e muito saborosas, conquistam pelo aroma e pela textura que derrete na boca.',
     img: '/assets/home/esfiha.png',
   },
 ];

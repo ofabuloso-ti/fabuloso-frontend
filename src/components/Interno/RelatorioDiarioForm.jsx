@@ -34,6 +34,17 @@ function RelatorioDiarioForm({
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const MOTIVOS_NC = [
+    'salgado_amassado',
+    'salgado_mal_empanado',
+    'salgado_encharcado',
+    'salgado_queimado',
+    'salgado_estourado',
+    'salgado_mal_frito',
+    'pastel_grudado',
+    'pastel_estourado',
+    'pastel_queimado',
+  ];
 
   useEffect(() => {
     const fetchData = async () => {
@@ -658,14 +669,23 @@ function RelatorioDiarioForm({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <label className="block">
                     <span className="text-gray-700 font-medium">Item:</span>
-                    <input
-                      type="text"
+                    <select
                       name="item_nao_conforme"
                       value={nc.item_nao_conforme}
                       onChange={(e) => handleNaoConformidadeChange(index, e)}
                       className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2
-                        focus:outline-none focus:ring-2 focus:ring-[#d20000] focus:border-[#d20000]"
-                    />
+    focus:outline-none focus:ring-2 focus:ring-[#d20000] focus:border-[#d20000]"
+                    >
+                      <option value="">Selecione</option>
+
+                      {MOTIVOS_NC.map((motivo) => (
+                        <option key={motivo} value={motivo}>
+                          {motivo
+                            .replace(/_/g, ' ')
+                            .replace(/\b\w/g, (l) => l.toUpperCase())}
+                        </option>
+                      ))}
+                    </select>
                   </label>
                   <label className="block">
                     <span className="text-gray-700 font-medium">

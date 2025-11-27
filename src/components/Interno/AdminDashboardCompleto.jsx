@@ -18,6 +18,17 @@ import {
 import djangoApi from '../../api/djangoApi';
 
 const COLORS = ['#641305', '#a8382e', '#e76f51', '#f4a261', '#2a9d8f'];
+const MOTIVOS_NC = [
+  'Salgados amassado',
+  'Salgados mal empanados',
+  'Salgado encharcado',
+  'Salgado queimado',
+  'Salgado estourado',
+  'Salgado mal frito',
+  'Pastel grudado',
+  'Pastel estourado',
+  'Pastel queimado',
+];
 
 const AdminDashboardCompleto = () => {
   const [relatorios, setRelatorios] = useState([]);
@@ -240,16 +251,27 @@ const AdminDashboardCompleto = () => {
     return Object.entries(mapa).map(([name, value]) => ({ name, value }));
   }, [relatorios]);
 
-  // -------------------- Histórico de Erros --------------------
+  // -------------------- Histórico de Não Conformidades (por motivo) --------------------
   const errosHistoricoData = useMemo(() => {
     const mapa = {};
 
     relatorios.forEach((rel) => {
       const dia = dayjs(rel.data).format('YYYY-MM-DD');
-      if (!mapa[dia]) mapa[dia] = { data: dia, erros: 0 };
 
+      // cria objeto base com todos os motivos zerados
+      if (!mapa[dia]) {
+        mapa[dia] = { data: dia };
+        MOTIVOS_NC.forEach((m) => (mapa[dia][m] = 0));
+      }
+
+      // soma quantidades reais
       rel.nao_conformidades?.forEach((n) => {
-        mapa[dia].erros += Number(n.quantidade) || 0;
+        const motivo = n.item_nao_conforme;
+        const qtd = Number(n.quantidade) || 0;
+
+        if (motivo && mapa[dia][motivo] !== undefined) {
+          mapa[dia][motivo] += qtd;
+        }
       });
     });
 
@@ -519,18 +541,15 @@ const AdminDashboardCompleto = () => {
           ) : (
             <div className="min-w-[600px] sm:min-w-full">
               <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={errosHistoricoData}>
-                  <XAxis dataKey="data" stroke="#d20000" />
-                  <YAxis allowDecimals={false} stroke="#d20000" />
-                  <Tooltip />
-                  <Legend />
+                {MOTIVOS_NC.map((motivo, i) => (
                   <Line
+                    key={motivo}
                     type="monotone"
-                    dataKey="erros"
-                    stroke="#e76f51"
-                    name="Quantidade de Erros"
+                    dataKey={motivo}
+                    stroke={COLORS[i % COLORS.length]}
+                    name={motivo}
                   />
-                </LineChart>
+                ))}
               </ResponsiveContainer>
             </div>
           )}

@@ -1,5 +1,6 @@
 // src/components/AdminDashboardCompleto.jsx
 import React, { useEffect, useMemo, useState } from 'react';
+
 import dayjs from 'dayjs';
 import {
   BarChart,
@@ -16,8 +17,32 @@ import {
   Line,
 } from 'recharts';
 import djangoApi from '../../api/djangoApi';
+const COLORS = [
+  '#FF0000', // Vermelho
+  '#0066FF', // Azul
+  '#00AA00', // Verde
+  '#FF8800', // Laranja
+  '#AA00FF', // Roxo
+  '#00CCC0', // Turquesa
+  '#CC00AA', // Magenta
+  '#7755FF', // Azul claro
+  '#009944', // Verde escuro
+  '#CC6600', // Marrom alaranjado
+];
 
-const COLORS = ['#641305', '#a8382e', '#e76f51', '#f4a261', '#2a9d8f'];
+const MOTIVOS_CANCELAMENTO = [
+  'Pedido duplicado',
+  'Erro no sistema',
+  'Cliente desistiu',
+  'Produto indisponível',
+  'Produto incorreto',
+  'Atraso na entrega',
+  'Problema de qualidade',
+  'Pedido fraudulento',
+  'Erro no cadastro do cliente',
+  'Política interna / ajuste operacional',
+];
+
 const MOTIVOS_NC = [
   'Salgados amassado',
   'Salgados mal empanados',
@@ -139,30 +164,41 @@ const AdminDashboardCompleto = () => {
   // -------------------- Cancelamentos por Dia --------------------
   const cancelamentosPorDia = useMemo(() => {
     const mapa = {};
+
     relatorios.forEach((rel) => {
       const dia = dayjs(rel.data).format('YYYY-MM-DD');
-      if (!mapa[dia]) mapa[dia] = { data: dia };
 
-      if (Array.isArray(rel.cancelamentos)) {
-        rel.cancelamentos.forEach((c) => {
-          const motivo = c.motivo_cancelamento || 'Não informado';
-          mapa[dia][motivo] = (mapa[dia][motivo] || 0) + 1;
-        });
+      // cria a base do dia com TODOS motivos zerados
+      if (!mapa[dia]) {
+        mapa[dia] = { data: dia };
+        MOTIVOS_CANCELAMENTO.forEach((m) => (mapa[dia][m] = 0));
       }
+
+      // soma valores reais
+      rel.cancelamentos?.forEach((c) => {
+        const motivo = c.motivo_cancelamento;
+        if (MOTIVOS_CANCELAMENTO.includes(motivo)) {
+          mapa[dia][motivo] += 1;
+        }
+      });
     });
+
     return Object.values(mapa).sort((a, b) => (a.data > b.data ? 1 : -1));
   }, [relatorios]);
 
   // ------------- EXTRAÇÃO DAS CHAVES (motivos) -------------
-  const todasAsChavesCancelamento = useMemo(() => {
-    const chaves = new Set();
-    cancelamentosPorDia.forEach((dia) => {
-      Object.keys(dia)
-        .filter((k) => k !== 'data')
-        .forEach((motivo) => chaves.add(motivo));
-    });
-    return Array.from(chaves);
-  }, [cancelamentosPorDia]);
+  {
+    MOTIVOS_CANCELAMENTO.map((motivo, i) => (
+      <Line
+        key={motivo}
+        type="monotone"
+        dataKey={motivo}
+        stroke={COLORS[i % COLORS.length]}
+        name={motivo}
+        dot={true}
+      />
+    ));
+  }
 
   // -------------------- Cancelamentos de HOJE --------------------
   const cancelamentosHoje = useMemo(() => {

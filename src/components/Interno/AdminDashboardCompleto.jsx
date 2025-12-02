@@ -187,18 +187,6 @@ const AdminDashboardCompleto = () => {
   }, [relatorios]);
 
   // ------------- EXTRAÇÃO DAS CHAVES (motivos) -------------
-  {
-    MOTIVOS_CANCELAMENTO.map((motivo, i) => (
-      <Line
-        key={motivo}
-        type="monotone"
-        dataKey={motivo}
-        stroke={COLORS[i % COLORS.length]}
-        name={motivo}
-        dot={true}
-      />
-    ));
-  }
 
   // -------------------- Cancelamentos de HOJE --------------------
   const cancelamentosHoje = useMemo(() => {
@@ -469,13 +457,14 @@ const AdminDashboardCompleto = () => {
                   <Tooltip />
                   <Legend />
 
-                  {todasAsChavesCancelamento.map((motivo, i) => (
+                  {MOTIVOS_CANCELAMENTO.map((motivo, i) => (
                     <Line
                       key={motivo}
                       type="monotone"
                       dataKey={motivo}
                       stroke={COLORS[i % COLORS.length]}
                       name={motivo}
+                      dot={true}
                     />
                   ))}
                 </LineChart>

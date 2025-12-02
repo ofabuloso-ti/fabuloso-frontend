@@ -1,6 +1,5 @@
 // src/components/AdminDashboardCompleto.jsx
 import React, { useEffect, useMemo, useState } from 'react';
-
 import dayjs from 'dayjs';
 import {
   BarChart,
@@ -17,19 +16,22 @@ import {
   Line,
 } from 'recharts';
 import djangoApi from '../../api/djangoApi';
+
+// Cores MUITO diferentes e fortes
 const COLORS = [
-  '#FF0000', // Vermelho
-  '#0066FF', // Azul
-  '#00AA00', // Verde
-  '#FF8800', // Laranja
-  '#AA00FF', // Roxo
-  '#00CCC0', // Turquesa
-  '#CC00AA', // Magenta
-  '#7755FF', // Azul claro
-  '#009944', // Verde escuro
-  '#CC6600', // Marrom alaranjado
+  '#FF0000', // vermelho
+  '#0055FF', // azul
+  '#00AA22', // verde
+  '#FF8800', // laranja
+  '#AA00FF', // roxo
+  '#00DDD0', // turquesa
+  '#DD00AA', // magenta
+  '#2222FF', // azul escuro
+  '#009977', // verde oceano
+  '#FF5599', // rosa
 ];
 
+// Lista fixa de motivos de cancelamento — sempre aparecem
 const MOTIVOS_CANCELAMENTO = [
   'Pedido duplicado',
   'Erro no sistema',
@@ -43,6 +45,7 @@ const MOTIVOS_CANCELAMENTO = [
   'Política interna / ajuste operacional',
 ];
 
+// Não conformidades (já estavam certas)
 const MOTIVOS_NC = [
   'Salgados amassado',
   'Salgados mal empanados',
@@ -144,7 +147,6 @@ const AdminDashboardCompleto = () => {
 
         // ----------- Faturamento por dia -----------
         const fatRaw = Array.isArray(fatRes.data) ? fatRes.data : [];
-
         setFaturamentoData(
           fatRaw.map((i) => ({
             data: asStrDate(i.data),
@@ -168,13 +170,13 @@ const AdminDashboardCompleto = () => {
     relatorios.forEach((rel) => {
       const dia = dayjs(rel.data).format('YYYY-MM-DD');
 
-      // cria a base do dia com TODOS motivos zerados
+      // base zerada com TODOS motivos
       if (!mapa[dia]) {
         mapa[dia] = { data: dia };
         MOTIVOS_CANCELAMENTO.forEach((m) => (mapa[dia][m] = 0));
       }
 
-      // soma valores reais
+      // soma reais
       rel.cancelamentos?.forEach((c) => {
         const motivo = c.motivo_cancelamento;
         if (MOTIVOS_CANCELAMENTO.includes(motivo)) {
@@ -186,7 +188,8 @@ const AdminDashboardCompleto = () => {
     return Object.values(mapa).sort((a, b) => (a.data > b.data ? 1 : -1));
   }, [relatorios]);
 
-  // ------------- EXTRAÇÃO DAS CHAVES (motivos) -------------
+  // As chaves são fixas — nunca dá erro
+  const todasAsChavesCancelamento = MOTIVOS_CANCELAMENTO;
 
   // -------------------- Cancelamentos de HOJE --------------------
   const cancelamentosHoje = useMemo(() => {
@@ -197,12 +200,15 @@ const AdminDashboardCompleto = () => {
 
     const mapa = {};
 
+    MOTIVOS_CANCELAMENTO.forEach((m) => (mapa[m] = 0));
+
     relatorios.forEach((rel) => {
-      const dia = dayjs(rel.data).format('YYYY-MM-DD');
-      if (dia === hoje && Array.isArray(rel.cancelamentos)) {
-        rel.cancelamentos.forEach((c) => {
-          const motivo = c.motivo_cancelamento || 'Não informado';
-          mapa[motivo] = (mapa[motivo] || 0) + 1;
+      if (dayjs(rel.data).format('YYYY-MM-DD') === hoje) {
+        rel.cancelamentos?.forEach((c) => {
+          const motivo = c.motivo_cancelamento;
+          if (MOTIVOS_CANCELAMENTO.includes(motivo)) {
+            mapa[motivo] += 1;
+          }
         });
       }
     });
@@ -272,23 +278,24 @@ const AdminDashboardCompleto = () => {
       }
     });
 
-    return Object.entries(mapa).map(([name, value]) => ({ name, value }));
+    return Object.entries(mapa).map(([name, value]) => ({
+      name,
+      value,
+    }));
   }, [relatorios]);
 
-  // -------------------- Histórico de Não Conformidades (por motivo) --------------------
+  // -------------------- Histórico Não Conformidades --------------------
   const errosHistoricoData = useMemo(() => {
     const mapa = {};
 
     relatorios.forEach((rel) => {
       const dia = dayjs(rel.data).format('YYYY-MM-DD');
 
-      // cria objeto base com todos os motivos zerados
       if (!mapa[dia]) {
         mapa[dia] = { data: dia };
         MOTIVOS_NC.forEach((m) => (mapa[dia][m] = 0));
       }
 
-      // soma quantidades reais
       rel.nao_conformidades?.forEach((n) => {
         const motivo = n.item_nao_conforme;
         const qtd = Number(n.quantidade) || 0;
@@ -303,8 +310,6 @@ const AdminDashboardCompleto = () => {
   }, [relatorios]);
 
   // ==============================================================
-  // ========================   JSX   ==============================
-  // ==============================================================
 
   return (
     <section className="px-4 sm:px-6 lg:px-8 py-6">
@@ -312,7 +317,7 @@ const AdminDashboardCompleto = () => {
         Dashboard
       </h2>
 
-      {/* -------------------- Filtro de Lojas -------------------- */}
+      {/* -------------------- Filtro -------------------- */}
       <div className="mb-6 flex justify-center">
         <select
           className="p-2 border rounded-lg shadow min-w-[180px]"
@@ -326,7 +331,7 @@ const AdminDashboardCompleto = () => {
           ) : (
             lojas.map((loja) => (
               <option key={loja.id} value={String(loja.id)}>
-                {loja.nome || loja.name || loja.titulo || `Loja ${loja.id}`}
+                {loja.nome}
               </option>
             ))
           )}
@@ -339,7 +344,7 @@ const AdminDashboardCompleto = () => {
         </div>
       )}
 
-      {/* -------------------- Cards Rápidos -------------------- */}
+      {/* -------------------- Cards -------------------- */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-10">
         {[
           {
@@ -352,7 +357,11 @@ const AdminDashboardCompleto = () => {
             value: usuarios.length,
             color: '#d20000',
           },
-          { title: 'Total de Lojas', value: lojas.length, color: '#d20000' },
+          {
+            title: 'Total de Lojas',
+            value: lojas.length,
+            color: '#d20000',
+          },
           {
             title: 'Faturamento Total',
             value: moeda(
@@ -386,26 +395,20 @@ const AdminDashboardCompleto = () => {
             Faturamento Diário
           </h3>
           <div className="min-w-[600px] sm:min-w-full">
-            <div className="min-w-[600px] sm:min-w-full">
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={errosHistoricoData}>
-                  <XAxis dataKey="data" stroke="#d20000" />
-                  <YAxis allowDecimals={false} stroke="#d20000" />
-                  <Tooltip />
-                  <Legend />
-
-                  {MOTIVOS_NC.map((motivo, i) => (
-                    <Line
-                      key={motivo}
-                      type="monotone"
-                      dataKey={motivo}
-                      stroke={COLORS[i % COLORS.length]}
-                      name={motivo}
-                    />
-                  ))}
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={faturamentoData}>
+                <XAxis dataKey="data" stroke="#d20000" />
+                <YAxis stroke="#d20000" />
+                <Tooltip formatter={(v) => moeda(v)} />
+                <Legend />
+                <Line
+                  type="monotone"
+                  dataKey="faturamento"
+                  stroke="#f4a261"
+                  name="Faturamento"
+                />
+              </LineChart>
+            </ResponsiveContainer>
           </div>
         </div>
 
@@ -438,7 +441,7 @@ const AdminDashboardCompleto = () => {
           </div>
         </div>
 
-        {/* -------- CANCELAMENTOS POR DIA (Linha) -------- */}
+        {/* -------- CANCELAMENTOS POR DIA -------- */}
         <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 overflow-x-auto">
           <h3 className="text-lg sm:text-xl font-semibold mb-4 text-[#d20000]">
             Cancelamentos por Dia
@@ -462,7 +465,7 @@ const AdminDashboardCompleto = () => {
                       key={motivo}
                       type="monotone"
                       dataKey={motivo}
-                      stroke={COLORS[i % COLORS.length]}
+                      stroke={COLORS[i]}
                       name={motivo}
                       dot={true}
                     />
@@ -473,7 +476,7 @@ const AdminDashboardCompleto = () => {
           )}
         </div>
 
-        {/* -------- CANCELAMENTOS HOJE (PIE) -------- */}
+        {/* -------- CANCELAMENTOS HOJE -------- */}
         <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 overflow-x-auto">
           <h3 className="text-lg sm:text-xl font-semibold mb-4 text-[#d20000]">
             Cancelamentos de Hoje
@@ -496,10 +499,7 @@ const AdminDashboardCompleto = () => {
                     label
                   >
                     {cancelamentosHoje.map((entry, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={COLORS[index % COLORS.length]}
-                      />
+                      <Cell key={`cell-${index}`} fill={COLORS[index]} />
                     ))}
                   </Pie>
                   <Tooltip />
@@ -509,7 +509,7 @@ const AdminDashboardCompleto = () => {
           )}
         </div>
 
-        {/* -------- Erros do dia -------- */}
+        {/* -------- Erros -------- */}
         <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
           <h3 className="text-lg sm:text-xl font-semibold mb-4 text-[#d20000]">
             Erros do Dia
@@ -547,10 +547,7 @@ const AdminDashboardCompleto = () => {
                     label
                   >
                     {errosDataHoje.map((entry, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={COLORS[index % COLORS.length]}
-                      />
+                      <Cell key={`cell-${index}`} fill={COLORS[index]} />
                     ))}
                   </Pie>
                   <Tooltip />
@@ -560,7 +557,7 @@ const AdminDashboardCompleto = () => {
           )}
         </div>
 
-        {/* -------- Histórico Não Conformidades -------- */}
+        {/* -------- Histórico NC -------- */}
         <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 overflow-x-auto">
           <h3 className="text-lg sm:text-xl font-semibold mb-4 text-[#d20000]">
             Histórico de Não Conformidades
@@ -572,15 +569,23 @@ const AdminDashboardCompleto = () => {
           ) : (
             <div className="min-w-[600px] sm:min-w-full">
               <ResponsiveContainer width="100%" height={300}>
-                {MOTIVOS_NC.map((motivo, i) => (
-                  <Line
-                    key={motivo}
-                    type="monotone"
-                    dataKey={motivo}
-                    stroke={COLORS[i % COLORS.length]}
-                    name={motivo}
-                  />
-                ))}
+                <LineChart data={errosHistoricoData}>
+                  <XAxis dataKey="data" stroke="#d20000" />
+                  <YAxis allowDecimals={false} stroke="#d20000" />
+                  <Tooltip />
+                  <Legend />
+
+                  {MOTIVOS_NC.map((motivo, i) => (
+                    <Line
+                      key={motivo}
+                      type="monotone"
+                      dataKey={motivo}
+                      stroke={COLORS[i]}
+                      name={motivo}
+                      dot={true}
+                    />
+                  ))}
+                </LineChart>
               </ResponsiveContainer>
             </div>
           )}

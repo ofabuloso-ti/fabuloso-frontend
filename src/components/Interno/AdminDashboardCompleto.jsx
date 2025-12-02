@@ -398,20 +398,26 @@ const AdminDashboardCompleto = () => {
             Faturamento Diário
           </h3>
           <div className="min-w-[600px] sm:min-w-full">
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={faturamentoData}>
-                <XAxis dataKey="data" stroke="#d20000" />
-                <YAxis stroke="#d20000" />
-                <Tooltip formatter={(v) => moeda(v)} />
-                <Legend />
-                <Line
-                  type="monotone"
-                  dataKey="faturamento"
-                  stroke="#f4a261"
-                  name="Faturamento"
-                />
-              </LineChart>
-            </ResponsiveContainer>
+            <div className="min-w-[600px] sm:min-w-full">
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={errosHistoricoData}>
+                  <XAxis dataKey="data" stroke="#d20000" />
+                  <YAxis allowDecimals={false} stroke="#d20000" />
+                  <Tooltip />
+                  <Legend />
+
+                  {MOTIVOS_NC.map((motivo, i) => (
+                    <Line
+                      key={motivo}
+                      type="monotone"
+                      dataKey={motivo}
+                      stroke={COLORS[i % COLORS.length]}
+                      name={motivo}
+                    />
+                  ))}
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </div>
 

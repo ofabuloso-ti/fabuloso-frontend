@@ -66,6 +66,7 @@ const AdminDashboardCompleto = () => {
   const [faturamentoData, setFaturamentoData] = useState([]);
   const [selectedLoja, setSelectedLoja] = useState('');
   const [loading, setLoading] = useState(false);
+  const [mostrarFaturamento, setMostrarFaturamento] = useState(false);
 
   const moeda = (valor) =>
     (Number(valor) || 0).toLocaleString('pt-BR', {
@@ -346,45 +347,99 @@ const AdminDashboardCompleto = () => {
 
       {/* -------------------- Cards -------------------- */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-10">
-        {[
-          {
-            title: 'Total de Relatórios',
-            value: relatorios.length,
-            color: '#d20000',
-          },
-          {
-            title: 'Total de Funcionários',
-            value: usuarios.length,
-            color: '#d20000',
-          },
-          {
-            title: 'Total de Lojas',
-            value: lojas.length,
-            color: '#d20000',
-          },
-          {
-            title: 'Faturamento Total',
-            value: moeda(
-              faturamentoData.reduce((sum, f) => sum + f.faturamento, 0),
-            ),
-            color: '#2a9d8f',
-          },
-        ].map((card, i) => (
-          <div
-            key={i}
-            className="bg-white rounded-lg shadow-md p-4 sm:p-6 text-center"
-          >
-            <h3 className="text-gray-700 text-md sm:text-lg font-semibold mb-2">
-              {card.title}
-            </h3>
-            <p
-              className="text-2xl sm:text-3xl font-bold"
-              style={{ color: card.color }}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+          {[
+            {
+              title: 'Total de Relatórios',
+              value: relatorios.length,
+              color: '#d20000',
+            },
+            {
+              title: 'Total de Funcionários',
+              value: usuarios.length,
+              color: '#d20000',
+            },
+            {
+              title: 'Total de Lojas',
+              value: lojas.length,
+              color: '#d20000',
+            },
+            {
+              title: 'Faturamento Total',
+              isMoney: true,
+              value: faturamentoData.reduce((sum, f) => sum + f.faturamento, 0),
+              color: '#2a9d8f',
+            },
+          ].map((card, i) => (
+            <div
+              key={i}
+              className="bg-white rounded-lg shadow-md p-4 sm:p-6 text-center"
             >
-              {card.value}
-            </p>
-          </div>
-        ))}
+              <h3 className="text-gray-700 text-md sm:text-lg font-semibold mb-2 flex items-center justify-center gap-2">
+                {card.title}
+
+                {/* ÍCONE OLHO */}
+                {card.isMoney && (
+                  <button
+                    onClick={() => setMostrarFaturamento(!mostrarFaturamento)}
+                    className="transition"
+                  >
+                    {mostrarFaturamento ? (
+                      // Ícone "olho aberto"
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-5 w-5 text-gray-700 hover:text-gray-900"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                        />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                        />
+                      </svg>
+                    ) : (
+                      // Ícone "olho fechado"
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-5 w-5 text-gray-700 hover:text-gray-900"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M13.875 18.825A10.05 10.05 0 0112 19c-4.477 0-8.268-2.943-9.542-7a9.97 9.97 0 012.223-3.592M9.88 9.88a3 3 0 104.24 4.24M6.18 6.18L3 3m18 18l-3.18-3.18"
+                        />
+                      </svg>
+                    )}
+                  </button>
+                )}
+              </h3>
+
+              <p
+                className="text-2xl sm:text-3xl font-bold"
+                style={{ color: card.color }}
+              >
+                {card.isMoney
+                  ? mostrarFaturamento
+                    ? moeda(card.value) // mostra valor real
+                    : '••••••••' // ocultado
+                  : card.value}
+              </p>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* -------------------- Gráficos -------------------- */}

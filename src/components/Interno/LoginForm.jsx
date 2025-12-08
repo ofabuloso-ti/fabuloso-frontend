@@ -7,16 +7,42 @@ const LoginForm = () => {
   const { login, error } = useAuth();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const navigate = useNavigate(); // 👈 hook do react-router
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     try {
-      await login(username, password);
-      console.log('Login realizado com sucesso!');
-      navigate('/interno'); // 👈 redireciona após login
+      // login retorna o usuário logado!
+      const usuario = await login(username, password);
+
+      console.log('Usuário logado:', usuario);
+
+      // REDIRECIONAMENTO POR TIPO DE USUÁRIO
+      if (!usuario?.user_type) {
+        console.warn('Usuário sem user_type, enviando para /interno');
+        return navigate('/interno');
+      }
+
+      switch (usuario.user_type) {
+        case 'admin':
+          navigate('/admin');
+          break;
+
+        case 'motoboy':
+          navigate('/motoboy');
+          break;
+
+        case 'funcionario':
+        case 'atendente':
+          navigate('/interno');
+          break;
+
+        default:
+          navigate('/interno');
+      }
     } catch (err) {
-      console.error('Falha no login');
+      console.error('Falha no login', err);
     }
   };
 
@@ -42,7 +68,7 @@ const LoginForm = () => {
         onChange={(e) => setUsername(e.target.value)}
         required
         placeholder="Digite seu usuário"
-        className="w-full px-4 py-2 mb-4 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#d20000]"
+        className="w-full px-4 py-2 mb-4 border border-gray-300 rounded"
       />
 
       <label
@@ -58,7 +84,7 @@ const LoginForm = () => {
         onChange={(e) => setPassword(e.target.value)}
         required
         placeholder="Digite sua senha"
-        className="w-full px-4 py-2 mb-4 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#d20000]"
+        className="w-full px-4 py-2 mb-4 border border-gray-300 rounded"
       />
 
       {error && (

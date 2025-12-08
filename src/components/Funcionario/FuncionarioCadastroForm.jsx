@@ -36,6 +36,7 @@ function FuncionarioCadastroForm({ onSave, onCancel }) {
     setLoading(true);
 
     try {
+      // BACKEND vai usar a loja do usuário logado automaticamente
       const { data } = await djangoApi.post(
         '/users/criar_usuario_loja/',
         formData,
@@ -46,7 +47,9 @@ function FuncionarioCadastroForm({ onSave, onCancel }) {
       console.error('Erro ao criar usuário:', err.response?.data || err);
       const serverError = err.response?.data;
 
-      if (serverError?.error) {
+      if (serverError?.erro) {
+        setError(serverError.erro);
+      } else if (serverError?.error) {
         setError(serverError.error);
       } else {
         setError('Erro ao salvar. Verifique os dados.');
@@ -116,7 +119,7 @@ function FuncionarioCadastroForm({ onSave, onCancel }) {
           />
         </div>
 
-        {/* Tipo de usuário */}
+        {/* Tipo de funcionário */}
         <div>
           <label className="text-gray-700 font-medium">
             Tipo de Funcionário *

@@ -1,4 +1,4 @@
-// src/components/FuncionarioDashboard.jsx
+// src/components/Interno/FuncionarioDashboard.jsx
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import djangoApi from '../../api/djangoApi';
@@ -7,6 +7,7 @@ import logoDesktop from '/assets/home/logo.png';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import HeaderFuncionario from './HeaderFuncionario';
+import FuncionarioForm from '../FuncionarioForm';
 
 import {
   BarChart,
@@ -28,30 +29,51 @@ const COLORS = ['#641305', '#a8382e', '#e76f51', '#f4a261', '#2a9d8f'];
 
 const FuncionarioDashboard = ({ user, onLogout }) => {
   const [activeTab, setActiveTab] = useState('dashboard');
+
+  // Relatórios
   const [relatorios, setRelatorios] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Funcionários (motoboy / atendente)
+  const [funcionarios, setFuncionarios] = useState([]);
+  const [loadingFuncionarios, setLoadingFuncionarios] = useState(false);
+  const [errorFuncionarios, setErrorFuncionarios] = useState(null);
+  const [showForm, setShowForm] = useState(false);
+  const [editFuncionario, setEditFuncionario] = useState(null);
+
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Pega aba vinda do navigate(..., { state: { tab } })
   useEffect(() => {
     if (location.state?.tab) {
       setActiveTab(location.state.tab);
     }
   }, [location]);
 
+  // Carrega relatórios ao montar
   useEffect(() => {
     fetchRelatorios();
   }, []);
 
+  // Carrega funcionários quando entra na aba Funcionários
+  useEffect(() => {
+    if (activeTab === 'funcionarios') {
+      fetchFuncionarios();
+    }
+  }, [activeTab]);
+
+  // ================== RELATÓRIOS ==================
   const fetchRelatorios = async () => {
     setLoading(true);
+    setError(null);
     try {
       const response = await djangoApi.get('/relatorios-diarios/');
       setRelatorios(response.data);
     } catch (err) {
       setError('Erro ao carregar relatórios.');
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -77,7 +99,80 @@ const FuncionarioDashboard = ({ user, onLogout }) => {
     });
   };
 
-  // ------------------ PDF ------------------
+  // ================== FUNCIONÁRIOS ==================
+  const fetchFuncionarios = async () => {
+    setLoadingFuncionarios(true);
+    setErrorFuncionarios(null);
+    try {
+      const { data } = await djangoApi.get('/users/');
+      // filtra apenas funcionários da MESMA LOJA e tipo atendente/motoboy
+      const filtrados = data.filter(
+        (f) =>
+          String(f.loja) === String(user.loja) &&
+          (f.user_type === 'atendente' || f.user_type === 'motoboy'),
+      );
+      setFuncionarios(filtrados);
+    } catch (err) {
+      console.error('Erro ao carregar funcionários', err);
+      setErrorFuncionarios('Erro ao carregar funcionários.');
+    } finally {
+      setLoadingFuncionarios(false);
+    }
+  };
+
+  const abrirNovoFuncionario = () => {
+    setEditFuncionario(null);
+    setShowForm(true);
+  };
+
+  const handleEditarFuncionario = (func) => {
+    setEditFuncionario(func);
+    setShowForm(true);
+  };
+
+  const handleCancelarForm = () => {
+    setShowForm(false);
+    setEditFuncionario(null);
+  };
+
+  const handleFuncionarioSalvo = (salvo) => {
+    if (editFuncionario) {
+      // edição
+      setFuncionarios((prev) =>
+        prev.map((f) => (f.id === salvo.id ? salvo : f)),
+      );
+    } else {
+      // novo
+      setFuncionarios((prev) => [...prev, salvo]);
+    }
+    setShowForm(false);
+    setEditFuncionario(null);
+  };
+
+  const handleExcluirFuncionario = async (id) => {
+    const confirmar = window.confirm(
+      'Tem certeza que deseja excluir este funcionário?',
+    );
+    if (!confirmar) return;
+
+    try {
+      await djangoApi.delete(`/users/${id}/`);
+      setFuncionarios((prev) => prev.filter((f) => f.id !== id));
+    } catch (err) {
+      console.error('Erro ao excluir funcionário:', err);
+      alert('Erro ao excluir funcionário.');
+    }
+  };
+
+  const labelCargo = (tipo) => {
+    if (tipo === 'atendente') return 'Atendente';
+    if (tipo === 'motoboy') return 'Motoboy';
+    if (tipo === 'funcionario') return 'Funcionário';
+    if (tipo === 'admin') return 'Administrador';
+    return tipo || '—';
+  };
+
+  // ================== PDF ==================
   const gerarPdfRelatorio = async (relatorioId) => {
     try {
       const { data: detalhe } = await djangoApi.get(
@@ -176,21 +271,21 @@ const FuncionarioDashboard = ({ user, onLogout }) => {
 
       const nomeArquivo = `Relatorio_${lojaNome}.pdf`;
       doc.save(nomeArquivo);
-    } catch {
+    } catch (err) {
+      console.error(err);
       alert('Erro ao gerar PDF.');
     }
   };
 
-  // ------------------ FILTROS E GRÁFICOS ------------------
-
+  // ================== FILTROS E GRÁFICOS ==================
   const relatoriosLoja = useMemo(
     () => relatorios.filter((r) => String(r.loja) === String(user.loja)),
     [relatorios, user.loja],
   );
 
-  const ultimoRelatorio = relatoriosLoja.sort(
-    (a, b) => new Date(b.data) - new Date(a.data),
-  )[0];
+  const ultimoRelatorio =
+    relatoriosLoja.sort((a, b) => new Date(b.data) - new Date(a.data))[0] ||
+    null;
 
   const vendasData = useMemo(() => {
     const dias = {};
@@ -263,8 +358,7 @@ const FuncionarioDashboard = ({ user, onLogout }) => {
     return Object.entries(mapa).map(([name, value]) => ({ name, value }));
   }, [relatoriosLoja]);
 
-  // ------------------ RENDER ------------------
-
+  // ================== RENDER ==================
   if (loading) return <div className="p-4 text-center">Carregando...</div>;
   if (error) return <div className="p-4 text-center text-red-600">{error}</div>;
 
@@ -273,6 +367,7 @@ const FuncionarioDashboard = ({ user, onLogout }) => {
       <HeaderFuncionario activeTab={activeTab} onLogout={onLogout} />
 
       <div className="p-4">
+        {/* DASHBOARD */}
         {activeTab === 'dashboard' && (
           <>
             <h2 className="text-3xl font-extrabold mb-6 text-[#d20000]">
@@ -319,8 +414,6 @@ const FuncionarioDashboard = ({ user, onLogout }) => {
                 <p>Nenhum relatório encontrado.</p>
               )}
             </div>
-
-            {/* ---------- GRÁFICOS COMPLETOS ---------- */}
 
             {/* 1 — Gráfico de vendas */}
             <div className="bg-white p-4 rounded shadow mb-8">
@@ -498,6 +591,78 @@ const FuncionarioDashboard = ({ user, onLogout }) => {
                   })}
                 </tbody>
               </table>
+            )}
+          </section>
+        )}
+
+        {/* FUNCIONÁRIOS */}
+        {activeTab === 'funcionarios' && (
+          <section>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-bold">Funcionários</h2>
+
+              {!showForm && (
+                <button
+                  onClick={abrirNovoFuncionario}
+                  className="bg-[#d20000] text-white px-4 py-2 rounded-md hover:opacity-90 transition"
+                >
+                  Novo Funcionário
+                </button>
+              )}
+            </div>
+
+            {showForm ? (
+              <FuncionarioForm
+                onSave={handleFuncionarioSalvo}
+                onCancel={handleCancelarForm}
+                existingFuncionario={editFuncionario}
+              />
+            ) : (
+              <>
+                {loadingFuncionarios ? (
+                  <p className="text-gray-600">Carregando funcionários...</p>
+                ) : errorFuncionarios ? (
+                  <p className="text-red-600">{errorFuncionarios}</p>
+                ) : funcionarios.length === 0 ? (
+                  <p className="text-gray-600">
+                    Nenhum funcionário cadastrado para sua loja.
+                  </p>
+                ) : (
+                  <table className="w-full border-collapse shadow rounded bg-white">
+                    <thead>
+                      <tr className="bg-gray-100">
+                        <th className="border px-4 py-2">Nome</th>
+                        <th className="border px-4 py-2">Cargo</th>
+                        <th className="border px-4 py-2 text-center">Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {funcionarios.map((f) => (
+                        <tr key={f.id} className="hover:bg-gray-50">
+                          <td className="border px-4 py-2">{f.username}</td>
+                          <td className="border px-4 py-2">
+                            {labelCargo(f.user_type)}
+                          </td>
+                          <td className="border px-4 py-2 text-center space-x-2">
+                            <button
+                              onClick={() => handleEditarFuncionario(f)}
+                              className="bg-[#d20000] text-white px-3 py-1 rounded"
+                            >
+                              Editar
+                            </button>
+                            <button
+                              onClick={() => handleExcluirFuncionario(f.id)}
+                              className="bg-[#d20000] text-white px-3 py-1 rounded"
+                            >
+                              Excluir
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </>
             )}
           </section>
         )}

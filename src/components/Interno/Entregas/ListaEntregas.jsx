@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import djangoApi from '../../../api/djangoApi';
 import CriarEntregaForm from './CriarEntregaForm';
 import EntregaDetalhe from './EntregaDetalhe';
+import HeaderFuncionario from '../../HeaderFuncionario';
 
 function ListaEntregas() {
   const [entregas, setEntregas] = useState([]);
@@ -20,6 +21,15 @@ function ListaEntregas() {
   // ============================================================
   // 🔥 CARREGAR ENTREGAS + LOJAS INICIAIS
   // ============================================================
+  <HeaderFuncionario
+    activeTab="entregas"
+    setActiveTab={() => {}}
+    onLogout={() => {
+      localStorage.removeItem('token');
+      window.location.href = '/';
+    }}
+  />;
+
   useEffect(() => {
     const fetchData = async () => {
       try {

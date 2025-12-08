@@ -6,7 +6,7 @@ import dayjs from 'dayjs';
 import logoDesktop from '/assets/home/logo.png';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import HeaderFuncionario from '../HeaderFuncionario';
+import HeaderFuncionario from './HeaderFuncionario';
 
 import {
   BarChart,

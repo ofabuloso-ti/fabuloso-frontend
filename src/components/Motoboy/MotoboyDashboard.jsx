@@ -1,4 +1,4 @@
-//src/components/Motoboy/MotoboyDashboard.jsx
+// src/components/Motoboy/MotoboyDashboard.jsx
 
 import React, { useEffect, useState } from 'react';
 import djangoApi from '../../api/djangoApi';
@@ -8,6 +8,10 @@ export default function MotoboyDashboard({ user, onLogout }) {
   const [entregas, setEntregas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState(null);
+
+  // FORM de criação
+  const [codigoEntrega, setCodigoEntrega] = useState('');
+  const [criando, setCriando] = useState(false);
 
   // ========== CARREGAR ENTREGAS ==========
   const loadEntregas = async () => {
@@ -26,6 +30,30 @@ export default function MotoboyDashboard({ user, onLogout }) {
   useEffect(() => {
     loadEntregas();
   }, []);
+
+  // ========== CADASTRAR ENTREGA ==========
+  const criarEntrega = async (e) => {
+    e.preventDefault();
+    if (!codigoEntrega.trim()) return alert('Digite um código!');
+
+    try {
+      setCriando(true);
+
+      const { data } = await djangoApi.post('/entregas/', {
+        codigo: codigoEntrega,
+      });
+
+      console.log('Entrega criada:', data);
+      setCodigoEntrega('');
+      await loadEntregas();
+      alert('Entrega cadastrada!');
+    } catch (e) {
+      console.error('Erro ao criar entrega:', e);
+      alert('Erro ao criar entrega.');
+    } finally {
+      setCriando(false);
+    }
+  };
 
   // ========== INICIAR ==========
   const iniciarEntrega = async (id) => {
@@ -47,9 +75,9 @@ export default function MotoboyDashboard({ user, onLogout }) {
     }
   };
 
-  // ========== CONVERSÃO ==========
   const formatarHora = (h) => (h ? dayjs(h).format('HH:mm') : '--');
 
+  // ========== RENDER ==========
   if (loading) return <p className="p-4">Carregando entregas...</p>;
   if (erro) return <p className="p-4 text-red-600">{erro}</p>;
 
@@ -59,6 +87,32 @@ export default function MotoboyDashboard({ user, onLogout }) {
         Minhas Entregas
       </h1>
 
+      {/* FORM DE CADASTRO */}
+      <form
+        onSubmit={criarEntrega}
+        className="bg-white p-4 rounded shadow mb-6 flex gap-3 items-end"
+      >
+        <div className="flex-1">
+          <label className="block font-semibold mb-1">Código da Entrega</label>
+          <input
+            type="text"
+            placeholder="Ex: 12345"
+            value={codigoEntrega}
+            onChange={(e) => setCodigoEntrega(e.target.value)}
+            className="w-full border px-3 py-2 rounded"
+          />
+        </div>
+
+        <button
+          type="submit"
+          disabled={criando}
+          className="bg-[#d20000] text-white px-4 py-3 rounded hover:bg-red-700 transition"
+        >
+          {criando ? 'Salvando...' : 'Cadastrar'}
+        </button>
+      </form>
+
+      {/* LISTA */}
       {entregas.length === 0 ? (
         <p>Nenhuma entrega encontrada.</p>
       ) : (

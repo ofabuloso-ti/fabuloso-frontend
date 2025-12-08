@@ -434,7 +434,7 @@ const FuncionarioDashboard = ({ user, onLogout }) => {
             <img src={logoDesktop} alt="Logo" className="h-12 cursor-pointer" />
           </Link>
 
-          {/* Menu mobile dropdown */}
+          {/* MENU MOBILE DROPDOWN */}
           {menuOpen && (
             <nav className="absolute top-14 left-0 w-48 bg-white shadow-lg rounded-md flex flex-col py-2 md:hidden z-50">
               <button
@@ -450,6 +450,7 @@ const FuncionarioDashboard = ({ user, onLogout }) => {
               >
                 Dashboard
               </button>
+
               <button
                 onClick={() => {
                   setActiveTab('relatorios');
@@ -463,6 +464,17 @@ const FuncionarioDashboard = ({ user, onLogout }) => {
               >
                 Relatórios
               </button>
+
+              <button
+                onClick={() => {
+                  navigate('/entregas');
+                  setMenuOpen(false);
+                }}
+                className="px-4 py-2 text-left hover:bg-gray-100"
+              >
+                Entregas
+              </button>
+
               <button
                 onClick={() => {
                   onLogout();
@@ -476,7 +488,7 @@ const FuncionarioDashboard = ({ user, onLogout }) => {
           )}
         </div>
 
-        {/* Menu desktop */}
+        {/* MENU DESKTOP */}
         <nav className="hidden md:flex space-x-6 font-semibold text-gray-700">
           <button
             onClick={() => setActiveTab('dashboard')}
@@ -488,6 +500,7 @@ const FuncionarioDashboard = ({ user, onLogout }) => {
           >
             Dashboard
           </button>
+
           <button
             onClick={() => setActiveTab('relatorios')}
             className={`px-3 py-1 rounded-md transition ${
@@ -496,7 +509,14 @@ const FuncionarioDashboard = ({ user, onLogout }) => {
                 : 'hover:bg-gray-200'
             }`}
           >
-            Relatório
+            Relatórios
+          </button>
+
+          <button
+            onClick={() => navigate('/entregas')}
+            className="px-3 py-1 rounded-md hover:bg-gray-200 transition"
+          >
+            Entregas
           </button>
         </nav>
 

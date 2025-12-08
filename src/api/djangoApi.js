@@ -18,4 +18,24 @@ const djangoApi = axios.create({
 // 🔹 NÃO precisamos mais de CSRF
 // pois removemos CSRF do Django via @csrf_exempt
 
+// ================================
+// API de ENTREGAS
+// ================================
+
+export const listarEntregas = () => {
+  return api.get('/entregas/');
+};
+
+export const criarEntrega = (data) => {
+  return api.post('/entregas/', data);
+};
+
+export const iniciarEntrega = (id) => {
+  return api.post(`/entregas/${id}/iniciar/`);
+};
+
+export const concluirEntrega = (id) => {
+  return api.post(`/entregas/${id}/concluir/`);
+};
+
 export default djangoApi;

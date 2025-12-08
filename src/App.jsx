@@ -16,19 +16,28 @@ import AdminDashboard from './components/Interno/AdminDashboard';
 import RelatorioDiarioForm from './components/Interno/RelatorioDiarioForm';
 import LojaForm from './components/Interno/LojaForm';
 import FuncionarioForm from './components/Interno/FuncionarioForm';
+
+// Entregas
+import ListaEntregas from './components/Interno/Entregas/ListaEntregas';
+import MotoboyDashboard from './components/Interno/Entregas/MotoboyDashboard';
+
+// Login
 import {
   LoginPageDesktop,
   LoginPageMobile,
 } from './components/Interno/LoginPage';
 
-// Landing Pages
+// Landing
 import Home from './components/Landing/Home';
 import About from './components/Landing/About';
 import Franquia from './components/Landing/Franquia';
 import Lojas from './components/Landing/Lojas';
 import Revendas from './components/Landing/Revendas';
 
-// Wrapper para relatórios (Admin - com id na URL)
+/* -------------------------------------------------------------------------- */
+/*                                WRAPPERS                                     */
+/* -------------------------------------------------------------------------- */
+
 function RelatorioFormWrapper({ isEdit }) {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -51,40 +60,31 @@ function RelatorioFormWrapper({ isEdit }) {
     load();
   }, [isEdit, id]);
 
-  const handleSave = () => navigate('/admin');
-  const handleCancel = () => navigate('/admin');
-
   if (loading) return <div className="loading-container">Carregando...</div>;
 
   return (
     <RelatorioDiarioForm
       existingRelatorio={isEdit ? relatorio : null}
-      onSave={handleSave}
-      onCancel={handleCancel}
+      onSave={() => navigate('/admin')}
+      onCancel={() => navigate('/admin')}
     />
   );
 }
 
-// Wrapper para relatórios (Funcionário - recebe existingRelatorio por state)
 function RelatorioFormFuncionarioWrapper({ currentUserLojaId }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const existingRelatorio = location.state?.existingRelatorio || null;
-
-  const handleSave = () => navigate('/funcionario');
-  const handleCancel = () => navigate('/funcionario');
 
   return (
     <RelatorioDiarioForm
       currentUserLojaId={currentUserLojaId}
-      existingRelatorio={existingRelatorio}
-      onSave={handleSave}
-      onCancel={handleCancel}
+      existingRelatorio={location.state?.existingRelatorio || null}
+      onSave={() => navigate('/funcionario')}
+      onCancel={() => navigate('/funcionario')}
     />
   );
 }
 
-// Wrapper para formulário de loja
 function LojaFormWrapper({ isEdit }) {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -105,24 +105,21 @@ function LojaFormWrapper({ isEdit }) {
     load();
   }, [isEdit, id]);
 
-  const handleSave = () => navigate('/admin');
-  const handleCancel = () => navigate('/admin');
-
   if (loading) return <div className="loading-container">Carregando...</div>;
 
   return (
     <LojaForm
       existingLoja={isEdit ? loja : null}
-      onSave={handleSave}
-      onCancel={handleCancel}
+      onSave={() => navigate('/admin')}
+      onCancel={() => navigate('/admin')}
     />
   );
 }
 
-// Wrapper para formulário de funcionário
 function FuncionarioFormWrapper({ isEdit }) {
   const navigate = useNavigate();
   const { id } = useParams();
+
   const [funcionario, setFuncionario] = React.useState(null);
   const [loading, setLoading] = React.useState(isEdit);
 
@@ -142,19 +139,20 @@ function FuncionarioFormWrapper({ isEdit }) {
     load();
   }, [isEdit, id]);
 
-  const handleSave = () => navigate('/admin');
-  const handleCancel = () => navigate('/admin');
-
   if (loading) return <div className="loading-container">Carregando...</div>;
 
   return (
     <FuncionarioForm
       existingFuncionario={isEdit ? funcionario : null}
-      onSave={handleSave}
-      onCancel={handleCancel}
+      onSave={() => navigate('/admin')}
+      onCancel={() => navigate('/admin')}
     />
   );
 }
+
+/* -------------------------------------------------------------------------- */
+/*                                APP PRINCIPAL                                */
+/* -------------------------------------------------------------------------- */
 
 function App() {
   const [user, setUser] = useState(null);
@@ -163,35 +161,35 @@ function App() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const checkCurrentUser = async () => {
+    const load = async () => {
       try {
-        const response = await djangoApi.get('auth/current_user/');
-        setUser(response.data);
+        const res = await djangoApi.get('auth/current_user/');
+        setUser(res.data);
       } catch {
         setUser(null);
       } finally {
         setLoading(false);
       }
     };
-    checkCurrentUser();
+    load();
   }, []);
 
   const handleLogin = async (username, password) => {
     setError('');
     try {
-      const response = await djangoApi.post('auth/login/', {
-        username,
-        password,
-      });
-      setUser(response.data);
-      navigate(response.data.user_type === 'admin' ? '/admin' : '/funcionario');
+      const res = await djangoApi.post('auth/login/', { username, password });
+      setUser(res.data);
+
+      // Redirecionamento por tipo de usuário
+      if (res.data.user_type === 'admin') navigate('/admin');
+      else if (res.data.user_type === 'motoboy') navigate('/motoboy');
+      else navigate('/funcionario'); // funcionário + atendente
     } catch {
       setError('Nome de usuário ou senha incorretos.');
     }
   };
 
   const handleLogout = async () => {
-    setError('');
     try {
       await djangoApi.post('auth/logout/');
       setUser(null);
@@ -205,7 +203,7 @@ function App() {
 
   return (
     <Routes>
-      {/* Landing pública */}
+      {/* Público */}
       <Route path="/" element={<Home />} />
       <Route path="/about" element={<About />} />
       <Route path="/franquia" element={<Franquia />} />
@@ -218,7 +216,13 @@ function App() {
         element={
           user ? (
             <Navigate
-              to={user.user_type === 'admin' ? '/admin' : '/funcionario'}
+              to={
+                user.user_type === 'admin'
+                  ? '/admin'
+                  : user.user_type === 'motoboy'
+                  ? '/motoboy'
+                  : '/funcionario'
+              }
             />
           ) : (
             <>
@@ -233,7 +237,36 @@ function App() {
         }
       />
 
-      {/* Relatórios - Admin */}
+      {/* ----------------------------- ENTREGAS ----------------------------- */}
+
+      {/* Lista de pedidos (funcionário + atendente) */}
+      <Route
+        path="/entregas"
+        element={
+          user &&
+          (user.user_type === 'funcionario' ||
+            user.user_type === 'atendente') ? (
+            <ListaEntregas />
+          ) : (
+            <Navigate to="/login" />
+          )
+        }
+      />
+
+      {/* Painel Motoboy */}
+      <Route
+        path="/motoboy"
+        element={
+          user && user.user_type === 'motoboy' ? (
+            <MotoboyDashboard />
+          ) : (
+            <Navigate to="/login" />
+          )
+        }
+      />
+
+      {/* ---------------------------- RELATÓRIOS ----------------------------- */}
+
       <Route
         path="/relatorio/novo"
         element={
@@ -244,6 +277,7 @@ function App() {
           )
         }
       />
+
       <Route
         path="/relatorio/editar/:id"
         element={
@@ -255,7 +289,6 @@ function App() {
         }
       />
 
-      {/* Relatórios - Funcionário */}
       <Route
         path="/relatorio"
         element={
@@ -267,7 +300,8 @@ function App() {
         }
       />
 
-      {/* Admin */}
+      {/* ------------------------------ ADMIN ------------------------------- */}
+
       <Route
         path="/admin"
         element={
@@ -279,7 +313,6 @@ function App() {
         }
       />
 
-      {/* Nova Loja */}
       <Route
         path="/loja/novo"
         element={
@@ -291,7 +324,6 @@ function App() {
         }
       />
 
-      {/* Editar Loja */}
       <Route
         path="/loja/editar/:id"
         element={
@@ -303,7 +335,6 @@ function App() {
         }
       />
 
-      {/* Novo Funcionário */}
       <Route
         path="/funcionario/novo"
         element={
@@ -315,7 +346,6 @@ function App() {
         }
       />
 
-      {/* Editar Funcionário */}
       <Route
         path="/funcionario/editar/:id"
         element={
@@ -327,7 +357,7 @@ function App() {
         }
       />
 
-      {/* Funcionário Dashboard */}
+      {/* Dashboard Funcionário */}
       <Route
         path="/funcionario"
         element={

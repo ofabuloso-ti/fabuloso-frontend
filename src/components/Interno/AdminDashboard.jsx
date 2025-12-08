@@ -419,25 +419,29 @@ const AdminDashboard = ({ onLogout }) => {
         </div>
 
         <nav className="hidden md:flex space-x-6 font-semibold text-gray-700">
-          {['dashboard', 'relatorios', 'usuarios', 'lojas'].map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`px-3 py-1 rounded-md transition ${
-                activeTab === tab
-                  ? 'bg-[#d20000] text-white'
-                  : 'hover:bg-gray-200'
-              }`}
-            >
-              {tab === 'dashboard'
-                ? 'Dashboard'
-                : tab === 'relatorios'
-                ? 'Relatório'
-                : tab === 'usuarios'
-                ? 'Funcionário'
-                : 'Loja'}
-            </button>
-          ))}
+          {['dashboard', 'relatorios', 'usuarios', 'lojas', 'entregas'].map(
+            (tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-3 py-1 rounded-md transition ${
+                  activeTab === tab
+                    ? 'bg-[#d20000] text-white'
+                    : 'hover:bg-gray-200'
+                }`}
+              >
+                {tab === 'dashboard'
+                  ? 'Dashboard'
+                  : tab === 'relatorios'
+                  ? 'Relatórios'
+                  : tab === 'usuarios'
+                  ? 'Funcionários'
+                  : tab === 'lojas'
+                  ? 'Lojas'
+                  : 'Entregas'}
+              </button>
+            ),
+          )}
         </nav>
 
         <button
@@ -455,28 +459,32 @@ const AdminDashboard = ({ onLogout }) => {
         }`}
       >
         <div className="p-4 space-y-4 pt-20">
-          {['dashboard', 'relatorios', 'usuarios', 'lojas'].map((tab) => (
-            <button
-              key={tab}
-              onClick={() => {
-                setActiveTab(tab);
-                setMenuOpen(false);
-              }}
-              className={`block w-full text-left px-3 py-2 rounded-md font-semibold transition ${
-                activeTab === tab
-                  ? 'bg-[#d20000] text-white'
-                  : 'hover:bg-gray-200'
-              }`}
-            >
-              {tab === 'dashboard'
-                ? 'Dashboard'
-                : tab === 'relatorios'
-                ? 'Relatório'
-                : tab === 'usuarios'
-                ? 'Funcionário'
-                : 'Loja'}
-            </button>
-          ))}
+          {['dashboard', 'relatorios', 'usuarios', 'lojas', 'entregas'].map(
+            (tab) => (
+              <button
+                key={tab}
+                onClick={() => {
+                  setActiveTab(tab);
+                  setMenuOpen(false);
+                }}
+                className={`block w-full text-left px-3 py-2 rounded-md font-semibold transition ${
+                  activeTab === tab
+                    ? 'bg-[#d20000] text-white'
+                    : 'hover:bg-gray-200'
+                }`}
+              >
+                {tab === 'dashboard'
+                  ? 'Dashboard'
+                  : tab === 'relatorios'
+                  ? 'Relatórios'
+                  : tab === 'usuarios'
+                  ? 'Funcionários'
+                  : tab === 'lojas'
+                  ? 'Lojas'
+                  : 'Entregas'}
+              </button>
+            ),
+          )}
           <button
             onClick={() => {
               onLogout();
@@ -668,6 +676,18 @@ const AdminDashboard = ({ onLogout }) => {
                 </tbody>
               </table>
             </div>
+          </section>
+        )}
+
+        {activeTab === 'entregas' && (
+          <section>
+            <h2 className="text-2xl font-bold mb-4">Entregas</h2>
+            <Link
+              to="/entregas"
+              className="bg-[#d20000] text-white px-4 py-2 rounded-md hover:opacity-90 transition"
+            >
+              Abrir Módulo de Entregas
+            </Link>
           </section>
         )}
       </main>

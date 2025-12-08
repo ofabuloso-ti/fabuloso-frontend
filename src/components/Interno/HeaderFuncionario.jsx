@@ -1,13 +1,9 @@
-// src/components/HeaderFuncionario.jsx
+// src/components/Interno/HeaderFuncionario.jsx
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import logoDesktop from '/assets/home/logo.png';
 
-export default function HeaderFuncionario({
-  activeTab,
-  setActiveTab,
-  onLogout,
-}) {
+export default function HeaderFuncionario({ activeTab, onLogout }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
   const navigate = useNavigate();
@@ -73,8 +69,7 @@ export default function HeaderFuncionario({
           <nav className="absolute top-14 left-0 w-48 bg-white shadow-lg rounded-md flex flex-col py-2 md:hidden z-50">
             <button
               onClick={() => {
-                setActiveTab('dashboard');
-                navigate('/dashboard');
+                navigate('/funcionario', { state: { tab: 'dashboard' } });
                 setMenuOpen(false);
               }}
               className={`px-4 py-2 text-left ${
@@ -88,8 +83,7 @@ export default function HeaderFuncionario({
 
             <button
               onClick={() => {
-                setActiveTab('relatorios');
-                navigate('/dashboard');
+                navigate('/funcionario', { state: { tab: 'relatorios' } });
                 setMenuOpen(false);
               }}
               className={`px-4 py-2 text-left ${
@@ -124,10 +118,9 @@ export default function HeaderFuncionario({
       {/* MENU DESKTOP */}
       <nav className="hidden md:flex space-x-6 font-semibold text-gray-700">
         <button
-          onClick={() => {
-            setActiveTab('dashboard');
-            navigate('/funcionario');
-          }}
+          onClick={() =>
+            navigate('/funcionario', { state: { tab: 'dashboard' } })
+          }
           className={`px-3 py-1 rounded-md transition ${
             activeTab === 'dashboard'
               ? 'bg-[#d20000] text-white'
@@ -138,10 +131,9 @@ export default function HeaderFuncionario({
         </button>
 
         <button
-          onClick={() => {
-            setActiveTab('relatorios');
-            navigate('/funcionario');
-          }}
+          onClick={() =>
+            navigate('/funcionario', { state: { tab: 'relatorios' } })
+          }
           className={`px-3 py-1 rounded-md transition ${
             activeTab === 'relatorios'
               ? 'bg-[#d20000] text-white'

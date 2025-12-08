@@ -1,6 +1,6 @@
 // src/components/FuncionarioDashboard.jsx
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { useNavigate, Link, useLocation } from 'react-router-dom';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import djangoApi from '../../api/djangoApi';
 import dayjs from 'dayjs';
 import logoDesktop from '/assets/home/logo.png';
@@ -31,10 +31,10 @@ const FuncionarioDashboard = ({ user, onLogout }) => {
   const [relatorios, setRelatorios] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
   const navigate = useNavigate();
   const location = useLocation();
 
-  // ⬅️ AQUI: se veio via navigate(state: { tab })
   useEffect(() => {
     if (location.state?.tab) {
       setActiveTab(location.state.tab);
@@ -47,14 +47,11 @@ const FuncionarioDashboard = ({ user, onLogout }) => {
 
   const fetchRelatorios = async () => {
     setLoading(true);
-    setError(null);
-
     try {
       const response = await djangoApi.get('/relatorios-diarios/');
       setRelatorios(response.data);
     } catch (err) {
       setError('Erro ao carregar relatórios.');
-      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -64,25 +61,23 @@ const FuncionarioDashboard = ({ user, onLogout }) => {
     dayjs(dataString).format('DD/MM/YYYY');
 
   const podeEditarRelatorio = (dataString) => {
-    const reportDayjs = dayjs(dataString);
     const now = dayjs();
+    const reportDayjs = dayjs(dataString);
     return now.diff(reportDayjs, 'hour') < 24;
   };
 
-  const handleRealizarInventario = () => {
-    navigate('/relatorio');
-  };
+  const handleRealizarInventario = () => navigate('/relatorio');
 
   const handleAtualizarInventario = (id) => {
-    const relatorioParaEditar = relatorios.find((r) => r.id === id);
-    if (!relatorioParaEditar) return;
+    const relatorio = relatorios.find((r) => r.id === id);
+    if (!relatorio) return;
 
     navigate('/relatorio', {
-      state: { existingRelatorio: relatorioParaEditar },
+      state: { existingRelatorio: relatorio },
     });
   };
 
-  // ------------------ PDF (permanece igual) ------------------
+  // ------------------ PDF ------------------
   const gerarPdfRelatorio = async (relatorioId) => {
     try {
       const { data: detalhe } = await djangoApi.get(
@@ -93,67 +88,32 @@ const FuncionarioDashboard = ({ user, onLogout }) => {
       const dataRelatorio = detalhe?.data
         ? dayjs(detalhe.data).format('DD/MM/YYYY HH:mm')
         : '—';
-      const responsavel = detalhe?.responsavel_username || '—';
-      const status = detalhe?.status || '—';
 
       const doc = new jsPDF();
       doc.setFillColor(100, 19, 5);
       doc.rect(0, 0, 210, 28, 'F');
       doc.setTextColor(255, 255, 255);
+
       doc.setFontSize(16);
       doc.text('Relatório Diário', 14, 18);
 
-      const toDataURL = (url) =>
-        fetch(url)
-          .then((r) => r.blob())
-          .then(
-            (b) =>
-              new Promise((res) => {
-                const reader = new FileReader();
-                reader.onload = () => res(reader.result);
-                reader.readAsDataURL(b);
-              }),
-          );
-
       try {
-        const imgData = await toDataURL(logoDesktop);
-        doc.addImage(imgData, 'PNG', 170, 6, 30, 18);
+        const blob = await fetch(logoDesktop).then((r) => r.blob());
+        const base64 = await new Promise((res) => {
+          const reader = new FileReader();
+          reader.onload = () => res(reader.result);
+          reader.readAsDataURL(blob);
+        });
+        doc.addImage(base64, 'PNG', 170, 6, 30, 18);
       } catch {}
 
-      doc.setTextColor(40, 40, 40);
-      doc.setFontSize(11);
+      let cursorY = 40;
 
-      const yStart = 36;
-      doc.text(`Loja: ${lojaNome}`, 14, yStart);
-      doc.text(`Responsável: ${responsavel}`, 14, yStart + 6);
-      doc.text(`Status: ${status}`, 14, yStart + 12);
-      doc.text(`Data do Relatório: ${dataRelatorio}`, 14, yStart + 18);
-      doc.text(
-        `Gerado em: ${dayjs().format('DD/MM/YYYY HH:mm')}`,
-        14,
-        yStart + 24,
-      );
-
-      let cursorY = yStart + 30;
-
-      const addFooter = () => {
-        const pageH = doc.internal.pageSize.height;
-        doc.setFontSize(9);
-        doc.setTextColor(120);
-        doc.text(
-          `Relatório #${relatorioId} • ${lojaNome} • Gerado em ${dayjs().format(
-            'DD/MM/YYYY HH:mm',
-          )}`,
-          14,
-          pageH - 10,
-        );
-      };
-
-      const sectionTitle = (title) => {
+      const section = (title) => {
         doc.setFontSize(13);
         doc.setTextColor(0, 0, 0);
         doc.text(title, 14, cursorY);
-        cursorY += 6;
+        cursorY += 8;
       };
 
       const renderTable = (head, body) => {
@@ -161,178 +121,88 @@ const FuncionarioDashboard = ({ user, onLogout }) => {
           startY: cursorY,
           head: [head],
           body,
-          styles: { fontSize: 10, cellPadding: 3 },
-          headStyles: { fillColor: [42, 157, 143] },
-          alternateRowStyles: { fillColor: [250, 250, 250] },
-          didDrawPage: addFooter,
+          styles: { fontSize: 10 },
         });
-        cursorY = doc.lastAutoTable.finalY + 8;
+        cursorY = doc.lastAutoTable.finalY + 10;
       };
 
-      // Resumo
-      const possiveisResumo = [
-        ['Retiradas (porta a porta)', detalhe?.pedidos_porta],
-        ['Entregas', detalhe?.pedidos_entrega],
+      section('Resumo');
+      renderTable(
+        ['Campo', 'Valor'],
         [
-          'Faturamento',
-          detalhe?.faturamento != null ? detalhe.faturamento : null,
+          ['Retiradas', detalhe.pedidos_porta],
+          ['Entregas', detalhe.pedidos_entrega],
+          ['Faturamento', detalhe.faturamento],
         ],
-      ].filter(([, v]) => v !== null && v !== undefined);
+      );
 
-      if (possiveisResumo.length > 0) {
-        sectionTitle('Resumo');
-        renderTable(['Campo', 'Valor'], possiveisResumo);
-      }
-
-      // Motoboys
-      const motoboys = Array.isArray(detalhe?.motoboys) ? detalhe.motoboys : [];
-      if (motoboys.length > 0) {
-        sectionTitle('Motoboys');
-        const body = motoboys.map((m) => [
-          m.nome_motoboy || '—',
-          m.quantidade_entregas ?? 0,
-          m.valor_entregas ?? 0,
-        ]);
-        renderTable(['Motoboy', 'Entregas', 'Taxa'], body);
-      }
-
-      // Não conformidades
-      const ncs = Array.isArray(detalhe?.nao_conformidades)
-        ? detalhe.nao_conformidades
-        : [];
-      if (ncs.length > 0) {
-        sectionTitle('Não Conformidades');
-        const body = ncs.map((n) => [
-          n.item_nao_conforme || '—',
-          n.detalhes || '—',
-          n.quantidade ?? 0,
-        ]);
-        renderTable(['Item', 'Detalhes', 'Quantidade'], body);
-      }
-
-      // Cancelamentos
-      const cancelamentos = Array.isArray(detalhe?.cancelamentos)
-        ? detalhe.cancelamentos
-        : [];
-      if (cancelamentos.length > 0) {
-        sectionTitle('Cancelamentos');
-        const body = cancelamentos.map((c) => [
-          c.motivo_cancelamento || '—',
-          c.tipo_cancelamento || '—',
-          c.gerou_prejuizo ? 'Sim' : 'Não',
-          c.valor_prejuizo ? `R$ ${Number(c.valor_prejuizo).toFixed(2)}` : '—',
-          c.acao_tomada || '—',
-        ]);
+      if (detalhe.motoboys?.length > 0) {
+        section('Motoboys');
         renderTable(
-          ['Motivo', 'Tipo', 'Prejuízo?', 'Valor', 'Ação Tomada'],
-          body,
+          ['Nome', 'Entregas', 'Taxa'],
+          detalhe.motoboys.map((m) => [
+            m.nome_motoboy,
+            m.quantidade_entregas,
+            m.valor_entregas,
+          ]),
         );
       }
 
-      // Estoques
-      const estoques = Array.isArray(detalhe?.estoques) ? detalhe.estoques : [];
-      if (estoques.length > 0) {
-        sectionTitle('Estoques');
-        const body = estoques.map((e) => [
-          e.item_estoque_nome || '—',
-          String(e.quantidade ?? 0),
-          e.esta_acabando ? 'Sim' : 'Não',
-        ]);
-        renderTable(['Produto', 'Quantidade', 'Acabando?'], body);
+      if (detalhe.nao_conformidades?.length > 0) {
+        section('Não conformidades');
+        renderTable(
+          ['Item', 'Detalhes', 'Qtd'],
+          detalhe.nao_conformidades.map((n) => [
+            n.item_nao_conforme,
+            n.detalhes,
+            n.quantidade,
+          ]),
+        );
       }
 
-      // Erros
-      if (detalhe?.erros_detalhes) {
-        sectionTitle('Erros');
-        doc.setFontSize(11);
-        doc.setTextColor(60);
-        const lines = doc.splitTextToSize(String(detalhe.erros_detalhes), 182);
-
-        for (const line of lines) {
-          if (cursorY > 270) {
-            doc.addPage();
-            addFooter();
-            cursorY = 20;
-          }
-          doc.text(line, 14, cursorY);
-          cursorY += 5;
-        }
+      if (detalhe.cancelamentos?.length > 0) {
+        section('Cancelamentos');
+        renderTable(
+          ['Motivo', 'Tipo', 'Prejuízo?', 'Valor', 'Ação'],
+          detalhe.cancelamentos.map((c) => [
+            c.motivo_cancelamento,
+            c.tipo_cancelamento,
+            c.gerou_prejuizo ? 'Sim' : 'Não',
+            c.valor_prejuizo,
+            c.acao_tomada,
+          ]),
+        );
       }
 
-      addFooter();
-
-      const nomeArquivo = `Relatorio_${lojaNome.replace(
-        /[^\w]+/g,
-        '_',
-      )}_${dayjs().format('YYYYMMDD_HHmm')}_${relatorioId}.pdf`;
-
+      const nomeArquivo = `Relatorio_${lojaNome}.pdf`;
       doc.save(nomeArquivo);
-    } catch (err) {
-      console.error(err);
-      alert('Não foi possível gerar o PDF.');
+    } catch {
+      alert('Erro ao gerar PDF.');
     }
   };
 
-  // ---------------------- FILTROS E GRÁFICOS ----------------------
+  // ------------------ FILTROS E GRÁFICOS ------------------
 
   const relatoriosLoja = useMemo(
     () => relatorios.filter((r) => String(r.loja) === String(user.loja)),
     [relatorios, user.loja],
   );
 
-  const ultimoRelatorio =
-    relatoriosLoja.sort((a, b) => new Date(b.data) - new Date(a.data))[0] ||
-    null;
+  const ultimoRelatorio = relatoriosLoja.sort(
+    (a, b) => new Date(b.data) - new Date(a.data),
+  )[0];
 
   const vendasData = useMemo(() => {
-    const porDia = {};
+    const dias = {};
+
     relatoriosLoja.forEach((r) => {
       const dia = dayjs(r.data).format('YYYY-MM-DD');
-      if (!porDia[dia]) porDia[dia] = { data: dia, porta: 0, entrega: 0 };
-      porDia[dia].porta += Number(r.pedidos_porta) || 0;
-      porDia[dia].entrega += Number(r.pedidos_entrega) || 0;
+      if (!dias[dia]) dias[dia] = { data: dia, porta: 0, entrega: 0 };
+      dias[dia].porta += Number(r.pedidos_porta) || 0;
+      dias[dia].entrega += Number(r.pedidos_entrega) || 0;
     });
 
-    return Object.values(porDia);
-  }, [relatoriosLoja]);
-
-  const erroHoje = useMemo(() => {
-    const hoje = dayjs().format('YYYY-MM-DD');
-    const r = relatoriosLoja.find(
-      (rel) => dayjs(rel.data).format('YYYY-MM-DD') === hoje,
-    );
-    return r?.erros_detalhes || null;
-  }, [relatoriosLoja]);
-
-  const errosDataHoje = useMemo(() => {
-    const hoje = dayjs().format('YYYY-MM-DD');
-    const mapa = {};
-
-    relatoriosLoja.forEach((rel) => {
-      if (dayjs(rel.data).format('YYYY-MM-DD') === hoje) {
-        (rel.nao_conformidades || []).forEach((n) => {
-          mapa[n.item_nao_conforme] =
-            (mapa[n.item_nao_conforme] || 0) + (Number(n.quantidade) || 0);
-        });
-      }
-    });
-
-    return Object.entries(mapa).map(([name, value]) => ({ name, value }));
-  }, [relatoriosLoja]);
-
-  const errosHistoricoData = useMemo(() => {
-    const mapa = {};
-
-    relatoriosLoja.forEach((rel) => {
-      const dia = dayjs(rel.data).format('YYYY-MM-DD');
-      mapa[dia] = mapa[dia] || { data: dia, erros: 0 };
-
-      (rel.nao_conformidades || []).forEach((n) => {
-        mapa[dia].erros += Number(n.quantidade) || 0;
-      });
-    });
-
-    return Object.values(mapa);
+    return Object.values(dias);
   }, [relatoriosLoja]);
 
   const cancelamentosHoje = useMemo(() => {
@@ -342,8 +212,7 @@ const FuncionarioDashboard = ({ user, onLogout }) => {
     relatoriosLoja.forEach((rel) => {
       if (dayjs(rel.data).format('YYYY-MM-DD') === hoje) {
         (rel.cancelamentos || []).forEach((c) => {
-          const motivo = c.tipo_cancelamento || 'Outros';
-          mapa[motivo] = (mapa[motivo] || 0) + 1;
+          mapa[c.tipo_cancelamento] = (mapa[c.tipo_cancelamento] || 0) + 1;
         });
       }
     });
@@ -363,20 +232,40 @@ const FuncionarioDashboard = ({ user, onLogout }) => {
     return Object.values(mapa);
   }, [relatoriosLoja]);
 
-  const totalCancelamentosUltimo = useMemo(() => {
-    if (!ultimoRelatorio) return 0;
-    return (ultimoRelatorio.cancelamentos || []).length;
-  }, [ultimoRelatorio]);
+  const errosHistorico = useMemo(() => {
+    const mapa = {};
 
-  // ---------------------- RENDER ----------------------
+    relatoriosLoja.forEach((rel) => {
+      const dia = dayjs(rel.data).format('YYYY-MM-DD');
+      mapa[dia] = mapa[dia] || { data: dia, erros: 0 };
 
-  if (loading)
-    return (
-      <div className="p-4 text-center text-gray-600">
-        Carregando painel do funcionário...
-      </div>
-    );
+      (rel.nao_conformidades || []).forEach((n) => {
+        mapa[dia].erros += Number(n.quantidade) || 0;
+      });
+    });
 
+    return Object.values(mapa);
+  }, [relatoriosLoja]);
+
+  const errosHoje = useMemo(() => {
+    const hoje = dayjs().format('YYYY-MM-DD');
+    const mapa = {};
+
+    relatoriosLoja.forEach((rel) => {
+      if (dayjs(rel.data).format('YYYY-MM-DD') === hoje) {
+        (rel.nao_conformidades || []).forEach((n) => {
+          mapa[n.item_nao_conforme] =
+            (mapa[n.item_nao_conforme] || 0) + Number(n.quantidade || 0);
+        });
+      }
+    });
+
+    return Object.entries(mapa).map(([name, value]) => ({ name, value }));
+  }, [relatoriosLoja]);
+
+  // ------------------ RENDER ------------------
+
+  if (loading) return <div className="p-4 text-center">Carregando...</div>;
   if (error) return <div className="p-4 text-center text-red-600">{error}</div>;
 
   return (
@@ -384,68 +273,161 @@ const FuncionarioDashboard = ({ user, onLogout }) => {
       <HeaderFuncionario activeTab={activeTab} onLogout={onLogout} />
 
       <div className="p-4">
-        {/* DASHBOARD */}
         {activeTab === 'dashboard' && (
-          <section>
+          <>
             <h2 className="text-3xl font-extrabold mb-6 text-[#d20000]">
               Dashboard
             </h2>
 
+            {/* Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-10">
               {ultimoRelatorio ? (
                 <>
-                  <div className="bg-white rounded-lg shadow-md p-4 text-center">
-                    <h3 className="text-gray-700 font-semibold mb-2">
-                      Total de Pedidos
-                    </h3>
+                  <div className="bg-white p-4 rounded shadow text-center">
+                    <h3>Total de Pedidos</h3>
                     <p className="text-3xl font-bold text-[#d20000]">
-                      {(Number(ultimoRelatorio.pedidos_porta) || 0) +
-                        (Number(ultimoRelatorio.pedidos_entrega) || 0)}
+                      {(ultimoRelatorio.pedidos_porta || 0) +
+                        (ultimoRelatorio.pedidos_entrega || 0)}
                     </p>
                   </div>
 
-                  <div className="bg-white rounded-lg shadow-md p-4 text-center">
-                    <h3 className="text-gray-700 font-semibold mb-2">
-                      Entregas
-                    </h3>
+                  <div className="bg-white p-4 rounded shadow text-center">
+                    <h3>Entregas</h3>
                     <p className="text-3xl font-bold text-[#d20000]">
-                      {Number(ultimoRelatorio.pedidos_entrega) || 0}
+                      {ultimoRelatorio.pedidos_entrega}
                     </p>
                   </div>
 
-                  <div className="bg-white rounded-lg shadow-md p-4 text-center">
-                    <h3 className="text-gray-700 font-semibold mb-2">
-                      Faturamento
-                    </h3>
+                  <div className="bg-white p-4 rounded shadow text-center">
+                    <h3>Faturamento</h3>
                     <p className="text-3xl font-bold text-[#2a9d8f]">
-                      {(
-                        Number(ultimoRelatorio.faturamento) || 0
-                      ).toLocaleString('pt-BR', {
-                        style: 'currency',
-                        currency: 'BRL',
-                      })}
+                      {(ultimoRelatorio.faturamento || 0).toLocaleString(
+                        'pt-BR',
+                        { style: 'currency', currency: 'BRL' },
+                      )}
                     </p>
                   </div>
 
-                  <div className="bg-white rounded-lg shadow-md p-4 text-center">
-                    <h3 className="text-gray-700 font-semibold mb-2">
-                      Cancelamentos
-                    </h3>
+                  <div className="bg-white p-4 rounded shadow text-center">
+                    <h3>Cancelamentos</h3>
                     <p className="text-3xl font-bold text-[#a8382e]">
-                      {totalCancelamentosUltimo}
+                      {(ultimoRelatorio.cancelamentos || []).length}
                     </p>
                   </div>
                 </>
               ) : (
-                <p className="col-span-4 text-center text-gray-600">
-                  Nenhum relatório encontrado.
-                </p>
+                <p>Nenhum relatório encontrado.</p>
               )}
             </div>
 
-            {/* Gráficos iguais ao seu código */}
-            {/* ... mantém tudo igual ... */}
-          </section>
+            {/* ---------- GRÁFICOS COMPLETOS ---------- */}
+
+            {/* 1 — Gráfico de vendas */}
+            <div className="bg-white p-4 rounded shadow mb-8">
+              <h3 className="font-bold mb-2">Pedidos — Histórico</h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={vendasData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="data" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Line type="monotone" dataKey="porta" stroke="#d20000" />
+                  <Line type="monotone" dataKey="entrega" stroke="#2a9d8f" />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* 2 — Pizza: Cancelamentos HOJE */}
+            <div className="bg-white p-4 rounded shadow mb-8">
+              <h3 className="font-bold mb-2">Cancelamentos — Hoje</h3>
+              {cancelamentosHoje.length > 0 ? (
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={cancelamentosHoje}
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={100}
+                      dataKey="value"
+                      label
+                    >
+                      {cancelamentosHoje.map((entry, index) => (
+                        <Cell
+                          key={index}
+                          fill={COLORS[index % COLORS.length]}
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <p className="text-gray-600">Nenhum cancelamento hoje.</p>
+              )}
+            </div>
+
+            {/* 3 — Histórico de cancelamentos */}
+            <div className="bg-white p-4 rounded shadow mb-8">
+              <h3 className="font-bold mb-2">Cancelamentos — Histórico</h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={cancelamentosHistorico}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="data" />
+                  <YAxis />
+                  <Tooltip />
+                  <Line
+                    type="monotone"
+                    dataKey="cancelamentos"
+                    stroke="#a8382e"
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* 4 — Pizza: Erros HOJE */}
+            <div className="bg-white p-4 rounded shadow mb-8">
+              <h3 className="font-bold mb-2">Não conformidades — Hoje</h3>
+              {errosHoje.length > 0 ? (
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={errosHoje}
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={100}
+                      dataKey="value"
+                      label
+                    >
+                      {errosHoje.map((entry, index) => (
+                        <Cell
+                          key={index}
+                          fill={COLORS[index % COLORS.length]}
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <p className="text-gray-600">Nenhum erro hoje.</p>
+              )}
+            </div>
+
+            {/* 5 — Histórico de erros */}
+            <div className="bg-white p-4 rounded shadow mb-8">
+              <h3 className="font-bold mb-2">Não conformidades — Histórico</h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={errosHistorico}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="data" />
+                  <YAxis />
+                  <Tooltip />
+                  <Line type="monotone" dataKey="erros" stroke="#e76f51" />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </>
         )}
 
         {/* RELATÓRIOS */}
@@ -453,6 +435,7 @@ const FuncionarioDashboard = ({ user, onLogout }) => {
           <section>
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-2xl font-bold">Relatórios</h2>
+
               <button
                 onClick={handleRealizarInventario}
                 className="bg-[#d20000] text-white px-4 py-2 rounded-md hover:opacity-90 transition"
@@ -460,64 +443,61 @@ const FuncionarioDashboard = ({ user, onLogout }) => {
                 Novo Relatório
               </button>
             </div>
+
             {relatoriosLoja.length === 0 ? (
-              <p className="text-gray-600">
-                Nenhum relatório encontrado. Crie um novo relatório!
-              </p>
+              <p className="text-gray-600">Nenhum relatório encontrado.</p>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse text-left">
-                  <thead>
-                    <tr className="bg-gray-200">
-                      <th className="border px-4 py-2">Data</th>
-                      <th className="border px-4 py-2">Status</th>
-                      <th className="border px-4 py-2 text-center">Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {relatoriosLoja.map(({ id, data, status }) => {
-                      const editable = podeEditarRelatorio(data);
-                      const statusExibicao =
-                        status === 'rascunho' && !editable
-                          ? 'Concluído'
-                          : status === 'concluido'
-                          ? 'Concluído'
-                          : 'Rascunho';
-                      return (
-                        <tr
-                          key={id}
-                          className="even:bg-gray-100 hover:bg-gray-200 transition"
-                        >
-                          <td className="border px-4 py-2">
-                            {formatarDataPorExtenso(data)}
-                          </td>
-                          <td className="border px-4 py-2">{statusExibicao}</td>
-                          <td className="border px-4 py-2 text-center space-x-2">
-                            {editable ? (
-                              <button
-                                onClick={() => handleAtualizarInventario(id)}
-                                className="bg-[#d20000] text-white px-3 py-1 rounded hover:opacity-90 transition"
-                              >
-                                Editar
-                              </button>
-                            ) : (
-                              <span className="text-gray-500 italic">
-                                Edição Expirada
-                              </span>
-                            )}
+              <table className="w-full border-collapse shadow rounded bg-white">
+                <thead>
+                  <tr className="bg-gray-100">
+                    <th className="border px-4 py-2">Data</th>
+                    <th className="border px-4 py-2">Status</th>
+                    <th className="border px-4 py-2 text-center">Ações</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {relatoriosLoja.map((rel) => {
+                    const editable = podeEditarRelatorio(rel.data);
+                    const status =
+                      rel.status === 'concluido' || !editable
+                        ? 'Concluído'
+                        : 'Rascunho';
+
+                    return (
+                      <tr key={rel.id} className="hover:bg-gray-50">
+                        <td className="border px-4 py-2">
+                          {formatarDataPorExtenso(rel.data)}
+                        </td>
+
+                        <td className="border px-4 py-2">{status}</td>
+
+                        <td className="border px-4 py-2 text-center space-x-2">
+                          {editable ? (
                             <button
-                              onClick={() => gerarPdfRelatorio(id)}
-                              className="bg-[#d20000] text-white px-3 py-1 rounded hover:opacity-90 transition"
+                              onClick={() => handleAtualizarInventario(rel.id)}
+                              className="bg-[#d20000] text-white px-3 py-1 rounded"
                             >
-                              PDF
+                              Editar
                             </button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+                          ) : (
+                            <span className="text-gray-400 italic">
+                              Edição Expirada
+                            </span>
+                          )}
+
+                          <button
+                            onClick={() => gerarPdfRelatorio(rel.id)}
+                            className="bg-[#d20000] text-white px-3 py-1 rounded"
+                          >
+                            PDF
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             )}
           </section>
         )}

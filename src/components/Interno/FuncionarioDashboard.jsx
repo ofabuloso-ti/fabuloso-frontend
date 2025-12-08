@@ -104,8 +104,7 @@ const FuncionarioDashboard = ({ user, onLogout }) => {
     setLoadingFuncionarios(true);
     setErrorFuncionarios(null);
     try {
-      const { data } = await djangoApi.get('/custom-users/');
-      // filtra apenas funcionários da MESMA LOJA e tipo atendente/motoboy
+      const { data } = await djangoApi.get('/users/');
       const filtrados = data.filter(
         (f) =>
           String(f.loja) === String(user.loja) &&

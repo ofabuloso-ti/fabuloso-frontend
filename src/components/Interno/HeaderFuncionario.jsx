@@ -126,7 +126,7 @@ export default function HeaderFuncionario({
         <button
           onClick={() => {
             setActiveTab('dashboard');
-            navigate('/dashboard');
+            navigate('/funcionario');
           }}
           className={`px-3 py-1 rounded-md transition ${
             activeTab === 'dashboard'
@@ -140,7 +140,7 @@ export default function HeaderFuncionario({
         <button
           onClick={() => {
             setActiveTab('relatorios');
-            navigate('/dashboard');
+            navigate('/funcionario');
           }}
           className={`px-3 py-1 rounded-md transition ${
             activeTab === 'relatorios'

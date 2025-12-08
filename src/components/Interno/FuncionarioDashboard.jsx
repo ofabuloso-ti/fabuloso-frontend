@@ -92,7 +92,6 @@ const FuncionarioDashboard = ({ user, onLogout }) => {
   }, [menuOpen]);
 
   // --- GERAR PDF COMPLETO ---
-  // --- GERAR PDF COMPLETO ---
   const gerarPdfRelatorio = async (relatorioId) => {
     try {
       const { data: detalhe } = await djangoApi.get(

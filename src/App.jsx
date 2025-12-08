@@ -149,11 +149,9 @@ function FuncionarioFormWrapper({ isEdit }) {
     />
   );
 }
-
 /* -------------------------------------------------------------------------- */
 /*                                APP PRINCIPAL                                */
 /* -------------------------------------------------------------------------- */
-
 function App() {
   const [user, setUser] = useState(null);
   const [error, setError] = useState('');
@@ -368,11 +366,9 @@ function App() {
           )
         }
       />
-
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>
   );
 }
-
 export default App;

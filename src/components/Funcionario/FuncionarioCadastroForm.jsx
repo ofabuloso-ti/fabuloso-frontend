@@ -1,59 +1,82 @@
 // src/components/Funcionario/FuncionarioCadastroForm.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import djangoApi from '../../api/djangoApi';
 
-function FuncionarioCadastroForm({ onSave, onCancel }) {
+function FuncionarioCadastroForm({ onSave, onCancel, funcionario }) {
   const [formData, setFormData] = useState({
     username: '',
     email: '',
     password: '',
-    user_type: 'atendente', // padrão
+    user_type: 'atendente',
   });
 
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // ---------------------------
-  // Handle inputs
-  // ---------------------------
+  // ===============================
+  // PREENCHE AUTOMATICAMENTE AO EDITAR
+  // ===============================
+  useEffect(() => {
+    if (funcionario) {
+      setFormData({
+        username: funcionario.username,
+        email: funcionario.email || '',
+        password: '',
+        user_type: funcionario.user_type, // <-- IMPORTANTE!
+      });
+    }
+  }, [funcionario]);
+
+  // ===============================
+  // HANDLES
+  // ===============================
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // ---------------------------
-  // Submit
-  // ---------------------------
+  // ===============================
+  // SUBMIT
+  // ===============================
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
 
-    if (!formData.username || !formData.password) {
-      setError('Preencha usuário e senha.');
+    if (!formData.username) {
+      setError('Preencha o nome de usuário.');
+      return;
+    }
+
+    if (!funcionario && !formData.password) {
+      setError('Senha obrigatória para novo funcionário.');
       return;
     }
 
     setLoading(true);
 
     try {
-      // BACKEND vai usar a loja do usuário logado automaticamente
-      const { data } = await djangoApi.post(
-        '/users/criar_usuario_loja/',
-        formData,
-      );
+      let resposta;
 
-      onSave(data);
+      if (funcionario) {
+        // EDITAR FUNCIONÁRIO
+        resposta = await djangoApi.patch(`/users/${funcionario.id}/`, {
+          username: formData.username,
+          email: formData.email,
+          user_type: formData.user_type,
+        });
+      } else {
+        // CRIAR FUNCIONÁRIO
+        resposta = await djangoApi.post('/users/criar_usuario_loja/', formData);
+      }
+
+      onSave(resposta.data);
     } catch (err) {
-      console.error('Erro ao criar usuário:', err.response?.data || err);
+      console.error('Erro ao salvar funcionário:', err.response?.data || err);
       const serverError = err.response?.data;
 
-      if (serverError?.erro) {
-        setError(serverError.erro);
-      } else if (serverError?.error) {
-        setError(serverError.error);
-      } else {
-        setError('Erro ao salvar. Verifique os dados.');
-      }
+      if (serverError?.erro) setError(serverError.erro);
+      else if (serverError?.error) setError(serverError.error);
+      else setError('Erro ao salvar. Verifique os dados.');
     } finally {
       setLoading(false);
     }
@@ -62,7 +85,7 @@ function FuncionarioCadastroForm({ onSave, onCancel }) {
   return (
     <div className="max-w-xl mx-auto bg-white p-8 rounded-lg shadow-lg">
       <h2 className="text-2xl font-bold text-[#d20000] mb-6">
-        Cadastrar Funcionário
+        {funcionario ? 'Editar Funcionário' : 'Cadastrar Funcionário'}
       </h2>
 
       {error && (
@@ -84,8 +107,7 @@ function FuncionarioCadastroForm({ onSave, onCancel }) {
           <input
             type="text"
             name="username"
-            className="w-full mt-1 border rounded-md px-3 py-2 focus:border-[#d20000]"
-            placeholder="Digite o nome de usuário"
+            className="w-full mt-1 border rounded-md px-3 py-2"
             value={formData.username}
             onChange={handleChange}
             required
@@ -94,44 +116,43 @@ function FuncionarioCadastroForm({ onSave, onCancel }) {
 
         {/* Email */}
         <div>
-          <label className="text-gray-700 font-medium">Email (opcional)</label>
+          <label className="text-gray-700 font-medium">Email</label>
           <input
             type="email"
             name="email"
-            className="w-full mt-1 border rounded-md px-3 py-2 focus:border-[#d20000]"
-            placeholder="email@example.com"
+            className="w-full mt-1 border rounded-md px-3 py-2"
             value={formData.email}
             onChange={handleChange}
           />
         </div>
 
-        {/* Senha */}
-        <div>
-          <label className="text-gray-700 font-medium">Senha *</label>
-          <input
-            type="password"
-            name="password"
-            className="w-full mt-1 border rounded-md px-3 py-2 focus:border-[#d20000]"
-            placeholder="Digite a senha"
-            value={formData.password}
-            onChange={handleChange}
-            required
-          />
-        </div>
+        {/* Senha — só ao criar */}
+        {!funcionario && (
+          <div>
+            <label className="text-gray-700 font-medium">Senha *</label>
+            <input
+              type="password"
+              name="password"
+              className="w-full mt-1 border rounded-md px-3 py-2"
+              value={formData.password}
+              onChange={handleChange}
+              required
+            />
+          </div>
+        )}
 
-        {/* Tipo de funcionário */}
+        {/* Tipo */}
         <div>
-          <label className="text-gray-700 font-medium">
-            Tipo de Funcionário *
-          </label>
+          <label className="text-gray-700 font-medium">Cargo *</label>
           <select
             name="user_type"
             value={formData.user_type}
             onChange={handleChange}
-            className="w-full mt-1 border rounded-md px-3 py-2 bg-white focus:border-[#d20000]"
+            className="w-full mt-1 border rounded-md px-3 py-2 bg-white"
           >
             <option value="atendente">Atendente</option>
             <option value="motoboy">Motoboy</option>
+            <option value="funcionario">Funcionário</option>
           </select>
         </div>
 
@@ -140,7 +161,7 @@ function FuncionarioCadastroForm({ onSave, onCancel }) {
           <button
             type="button"
             onClick={onCancel}
-            className="px-6 py-2 bg-gray-300 rounded-md hover:bg-gray-400 transition"
+            className="px-6 py-2 bg-gray-300 rounded-md"
           >
             Cancelar
           </button>
@@ -148,9 +169,9 @@ function FuncionarioCadastroForm({ onSave, onCancel }) {
           <button
             type="submit"
             disabled={loading}
-            className="px-6 py-2 bg-[#28a745] text-white rounded-md hover:bg-green-600 transition"
+            className="px-6 py-2 bg-[#28a745] text-white rounded-md"
           >
-            {loading ? 'Salvando...' : 'Salvar Funcionário'}
+            {loading ? 'Salvando...' : funcionario ? 'Salvar' : 'Cadastrar'}
           </button>
         </div>
       </form>

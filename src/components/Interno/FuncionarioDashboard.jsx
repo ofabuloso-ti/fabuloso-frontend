@@ -108,7 +108,7 @@ const FuncionarioDashboard = ({ user, onLogout }) => {
       const filtrados = data.filter(
         (f) =>
           String(f.loja) === String(user.loja) &&
-          (f.user_type === 'atendente' || f.user_type === 'motoboy'),
+          ['funcionario', 'atendente', 'motoboy'].includes(f.user_type),
       );
       setFuncionarios(filtrados);
     } catch (err) {
@@ -612,6 +612,7 @@ const FuncionarioDashboard = ({ user, onLogout }) => {
 
             {showForm ? (
               <FuncionarioCadastroForm
+                funcionario={editFuncionario}
                 onSave={handleFuncionarioSalvo}
                 onCancel={handleCancelarForm}
               />

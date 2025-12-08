@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import djangoApi from '../../../api/djangoApi';
 import CriarEntregaForm from './CriarEntregaForm';
 import EntregaDetalhe from './EntregaDetalhe';
-import HeaderFuncionario from '../../HeaderFuncionario';
+import HeaderFuncionario from '../HeaderFuncionario';
 
 function ListaEntregas() {
   const [entregas, setEntregas] = useState([]);

@@ -7,7 +7,7 @@ import logoDesktop from '/assets/home/logo.png';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import HeaderFuncionario from './HeaderFuncionario';
-import FuncionarioForm from './FuncionarioForm';
+import FuncionarioCadastroForm from '../Funcionario/FuncionarioCadastroForm';
 
 import {
   BarChart,
@@ -612,10 +612,9 @@ const FuncionarioDashboard = ({ user, onLogout }) => {
             </div>
 
             {showForm ? (
-              <FuncionarioForm
+              <FuncionarioCadastroForm
                 onSave={handleFuncionarioSalvo}
                 onCancel={handleCancelarForm}
-                existingFuncionario={editFuncionario}
               />
             ) : (
               <>

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import djangoApi from '../../../api/djangoApi';
 import dayjs from 'dayjs';
 import { useNavigate } from 'react-router-dom';
-import HeaderMotoboy from '../HeaderMotoboy';
+import HeaderMotoboy from '../HeaderMotoboy.jsx';
 
 export default function MotoboyDashboard({ user, onLogout }) {
   const [entregas, setEntregas] = useState([]);

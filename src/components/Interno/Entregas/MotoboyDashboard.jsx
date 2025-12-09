@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import djangoApi from '../../../api/djangoApi';
 import dayjs from 'dayjs';
 import { useNavigate } from 'react-router-dom';
-import HeaderFuncionario from '../HeaderFuncionario';
+import HeaderMotoboy from '../HeaderMotoboy';
 
 export default function MotoboyDashboard({ user, onLogout }) {
   const [entregas, setEntregas] = useState([]);
@@ -65,7 +65,7 @@ export default function MotoboyDashboard({ user, onLogout }) {
   return (
     <>
       {/* HEADER */}
-      <HeaderFuncionario activeTab="motoboy" onLogout={onLogout} />
+      <HeaderMotoboy activeTab="dashboard" onLogout={onLogout} />
 
       <div className="p-4 md:p-8 bg-gray-100 min-h-screen">
         {/* TÍTULO */}

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import djangoApi from '../../api/djangoApi';
+import djangoApi from '../../../api/djangoApi';
+
 import dayjs from 'dayjs';
 
 export default function MotoboyDashboard({ user, onLogout }) {

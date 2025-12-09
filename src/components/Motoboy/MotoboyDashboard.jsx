@@ -186,6 +186,19 @@ export default function MotoboyDashboard({ user, onLogout }) {
       >
         Sair
       </button>
+      <button
+        onClick={onLogout}
+        className="mt-6 bg-[#d20000] text-white px-4 py-2 rounded"
+      >
+        Sair
+      </button>
+
+      <button
+        onClick={() => (window.location.href = '/')}
+        className="mt-3 bg-gray-500 text-white px-4 py-2 rounded"
+      >
+        Voltar ao Início
+      </button>
     </div>
   );
 }

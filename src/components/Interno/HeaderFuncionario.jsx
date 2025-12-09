@@ -1,14 +1,15 @@
-// src/components/Interno/HeaderFuncionario.jsx
+// src/components/Interno/HeaderMotoboy.jsx
 import React, { useState, useRef, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import logoDesktop from '/assets/home/logo.png';
 
-export default function HeaderFuncionario({ activeTab, onLogout }) {
+export default function HeaderMotoboy({ activeTab, onLogout }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
   const navigate = useNavigate();
+  const location = useLocation();
 
-  // Fechar menu ao clicar fora
+  // fechar menu ao clicar fora
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (menuRef.current && !menuRef.current.contains(e.target)) {
@@ -22,7 +23,7 @@ export default function HeaderFuncionario({ activeTab, onLogout }) {
   return (
     <header className="flex items-center justify-between bg-white p-4 shadow-md sticky top-0 z-50">
       <div className="flex items-center space-x-3 relative" ref={menuRef}>
-        {/* HAMBURGER MOBILE */}
+        {/* HAMBURGUER MOBILE */}
         <button
           className="md:hidden focus:outline-none"
           onClick={() => setMenuOpen(!menuOpen)}
@@ -57,7 +58,7 @@ export default function HeaderFuncionario({ activeTab, onLogout }) {
         </button>
 
         {/* LOGO */}
-        <Link to="/home">
+        <Link to="/motoboy/dashboard">
           <img src={logoDesktop} alt="Logo" className="h-12 cursor-pointer" />
         </Link>
 
@@ -67,11 +68,11 @@ export default function HeaderFuncionario({ activeTab, onLogout }) {
             {/* Dashboard */}
             <button
               onClick={() => {
-                navigate('/funcionario', { state: { tab: 'dashboard' } });
+                navigate('/motoboy/dashboard');
                 setMenuOpen(false);
               }}
               className={`px-4 py-2 text-left ${
-                activeTab === 'dashboard'
+                location.pathname.includes('/motoboy/dashboard')
                   ? 'bg-[#d20000] text-white'
                   : 'hover:bg-gray-100'
               }`}
@@ -79,45 +80,19 @@ export default function HeaderFuncionario({ activeTab, onLogout }) {
               Dashboard
             </button>
 
-            {/* Relatórios */}
-            <button
-              onClick={() => {
-                navigate('/funcionario', { state: { tab: 'relatorios' } });
-                setMenuOpen(false);
-              }}
-              className={`px-4 py-2 text-left ${
-                activeTab === 'relatorios'
-                  ? 'bg-[#d20000] text-white'
-                  : 'hover:bg-gray-100'
-              }`}
-            >
-              Relatórios
-            </button>
-
             {/* Entregas */}
             <button
               onClick={() => {
-                navigate('/entregas');
-                setMenuOpen(false);
-              }}
-              className="px-4 py-2 text-left hover:bg-gray-100"
-            >
-              Entregas
-            </button>
-
-            {/* Funcionários */}
-            <button
-              onClick={() => {
-                navigate('/funcionario', { state: { tab: 'funcionarios' } });
+                navigate('/motoboy/entregas');
                 setMenuOpen(false);
               }}
               className={`px-4 py-2 text-left ${
-                activeTab === 'funcionarios'
+                location.pathname.includes('/motoboy/entregas')
                   ? 'bg-[#d20000] text-white'
                   : 'hover:bg-gray-100'
               }`}
             >
-              Funcionários
+              Entregas
             </button>
 
             {/* Logout */}
@@ -135,11 +110,9 @@ export default function HeaderFuncionario({ activeTab, onLogout }) {
       <nav className="hidden md:flex space-x-6 font-semibold text-gray-700">
         {/* Dashboard */}
         <button
-          onClick={() =>
-            navigate('/funcionario', { state: { tab: 'dashboard' } })
-          }
+          onClick={() => navigate('/motoboy/dashboard')}
           className={`px-4 py-2 rounded-md transition ${
-            activeTab === 'dashboard'
+            location.pathname.includes('/motoboy/dashboard')
               ? 'bg-[#d20000] text-white'
               : 'hover:bg-gray-200'
           }`}
@@ -147,40 +120,16 @@ export default function HeaderFuncionario({ activeTab, onLogout }) {
           Dashboard
         </button>
 
-        {/* Relatórios */}
-        <button
-          onClick={() =>
-            navigate('/funcionario', { state: { tab: 'relatorios' } })
-          }
-          className={`px-4 py-2 rounded-md transition ${
-            activeTab === 'relatorios'
-              ? 'bg-[#d20000] text-white'
-              : 'hover:bg-gray-200'
-          }`}
-        >
-          Relatórios
-        </button>
-
         {/* Entregas */}
         <button
-          onClick={() => navigate('/entregas')}
-          className="px-4 py-2 rounded-md hover:bg-gray-200 transition"
-        >
-          Entregas
-        </button>
-
-        {/* Funcionários */}
-        <button
-          onClick={() =>
-            navigate('/funcionario', { state: { tab: 'funcionarios' } })
-          }
+          onClick={() => navigate('/motoboy/entregas')}
           className={`px-4 py-2 rounded-md transition ${
-            activeTab === 'funcionarios'
+            location.pathname.includes('/motoboy/entregas')
               ? 'bg-[#d20000] text-white'
               : 'hover:bg-gray-200'
           }`}
         >
-          Funcionários
+          Entregas
         </button>
       </nav>
 

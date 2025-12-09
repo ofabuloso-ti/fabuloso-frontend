@@ -75,6 +75,10 @@ export default function MotoboyDashboard({ user, onLogout }) {
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
+      <div style={{ background: 'yellow', padding: 10 }}>
+        ✔ CARREGOU O ARQUIVO CERTO
+      </div>
+
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-[#d20000]"> teste</h1>
 

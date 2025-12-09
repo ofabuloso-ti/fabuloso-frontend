@@ -256,7 +256,7 @@ function App() {
         path="/motoboy"
         element={
           user && user.user_type === 'motoboy' ? (
-            <MotoboyDashboard />
+            <MotoboyDashboard user={user} onLogout={handleLogout} />
           ) : (
             <Navigate to="/login" />
           )

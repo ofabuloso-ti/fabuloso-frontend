@@ -65,7 +65,7 @@ export default function MotoboyDashboard({ user, onLogout }) {
   return (
     <>
       {/* HEADER */}
-      <HeaderMotoboy activeTab="dashboard" onLogout={onLogout} />
+      <HeaderMotoboy activeTab="motoboy" onLogout={onLogout} />
 
       <div className="p-4 md:p-8 bg-gray-100 min-h-screen">
         {/* TÍTULO */}

@@ -37,7 +37,7 @@ export default function MotoboyDashboard({ user, onLogout }) {
     }
 
     try {
-      await djangoApi.post('/entregas/', { codigo });
+      await djangoApi.post('/entregas/', { codigo_pedido: codigo });
       setCodigo('');
       setShowForm(false);
       loadEntregas();

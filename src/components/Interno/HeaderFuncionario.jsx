@@ -1,10 +1,8 @@
 // src/components/Interno/HeaderFuncionario.jsx
 import React, { useEffect, useState } from 'react';
 import djangoApi from '../../api/djangoApi';
-
 import dayjs from 'dayjs';
 import { useNavigate } from 'react-router-dom';
-import HeaderFuncionario from '../HeaderFuncionario';
 
 export default function MotoboyDashboard({ user, onLogout }) {
   const [entregas, setEntregas] = useState([]);

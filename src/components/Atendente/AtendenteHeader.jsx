@@ -2,7 +2,13 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 function AtendenteHeader() {
-  const location = useLocation();
+  let location = { pathname: '' };
+
+  try {
+    location = useLocation();
+  } catch {
+    // evita crash caso esteja fora do Router
+  }
 
   const isActive = (path) => location.pathname === path;
 

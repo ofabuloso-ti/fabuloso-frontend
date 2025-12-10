@@ -48,7 +48,9 @@ function ListaEntregas() {
     let list = [...entregas];
 
     // filtrar pela loja fixa do usuário
-    list = list.filter((e) => String(e.loja) === String(lojaDoUsuario));
+    if (lojaDoUsuario) {
+      list = list.filter((e) => String(e.loja) === String(lojaDoUsuario));
+    }
 
     if (statusFilter) {
       list = list.filter((e) => e.status === statusFilter);

@@ -11,8 +11,8 @@ import {
 import djangoApi from './api/djangoApi';
 
 // Interno
-import DashboardAtendente from './components/Interno/Atendente/DashboardAtendente';
-import AtendenteEntregas from './components/Interno/Atendente/AtendenteEntregas';
+import DashboardAtendente from './components/Interno/Atendente/AtendenteDashboard';
+import AtendenteEntregas from './components/Interno/Atendente/AtendenteHeader';
 import FuncionarioDashboard from './components/Interno/FuncionarioDashboard';
 import AdminDashboard from './components/Interno/AdminDashboard';
 import RelatorioDiarioForm from './components/Interno/RelatorioDiarioForm';

@@ -11,6 +11,8 @@ import {
 import djangoApi from './api/djangoApi';
 
 // Interno
+import DashboardAtendente from './components/Interno/Atendente/DashboardAtendente';
+import AtendenteEntregas from './components/Interno/Atendente/AtendenteEntregas';
 import FuncionarioDashboard from './components/Interno/FuncionarioDashboard';
 import AdminDashboard from './components/Interno/AdminDashboard';
 import RelatorioDiarioForm from './components/Interno/RelatorioDiarioForm';
@@ -366,6 +368,31 @@ function App() {
           )
         }
       />
+
+      {/* ----------------------------- ATENDENTE ----------------------------- */}
+
+      <Route
+        path="/dashboardAtendente"
+        element={
+          user && user.user_type === 'atendente' ? (
+            <DashboardAtendente user={user} onLogout={handleLogout} />
+          ) : (
+            <Navigate to="/login" />
+          )
+        }
+      />
+
+      <Route
+        path="/atendenteEntregas"
+        element={
+          user && user.user_type === 'atendente' ? (
+            <AtendenteEntregas user={user} onLogout={handleLogout} />
+          ) : (
+            <Navigate to="/login" />
+          )
+        }
+      />
+
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>

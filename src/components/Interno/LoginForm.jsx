@@ -24,6 +24,7 @@ const LoginForm = () => {
         return navigate('/interno');
       }
 
+      // REDIRECIONAMENTO POR TIPO DE USUÁRIO
       switch (usuario.user_type) {
         case 'admin':
           navigate('/admin');
@@ -33,8 +34,11 @@ const LoginForm = () => {
           navigate('/motoboy');
           break;
 
-        case 'funcionario':
         case 'atendente':
+          navigate('/dashboardAtendente');
+          break;
+
+        case 'funcionario':
           navigate('/interno');
           break;
 

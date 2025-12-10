@@ -12,25 +12,25 @@ function ListaEntregas() {
 
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  const [lojaFilter, setLojaFilter] = useState('');
-  const [lojas, setLojas] = useState([]);
 
   const [selectedEntrega, setSelectedEntrega] = useState(null);
   const [isCreating, setIsCreating] = useState(false);
 
-  // ============================================================
-  // 🔥 CARREGAR ENTREGAS + LOJAS INICIAIS
-  // ============================================================
+  // =====================================================================
+  // 🔥 PEGAR LOJA DO FUNCIONÁRIO LOGADO
+  // =====================================================================
+  const user = JSON.parse(localStorage.getItem('user'));
+  const lojaDoUsuario = user?.loja_id;
 
+  // =====================================================================
+  // 🔥 CARREGAR ENTREGAS
+  // =====================================================================
   useEffect(() => {
     const fetchData = async () => {
       try {
         const entregasRes = await djangoApi.get('/entregas/');
-        const lojasRes = await djangoApi.get('/lojas/');
-
         setEntregas(entregasRes.data);
         setFiltered(entregasRes.data);
-        setLojas(lojasRes.data);
       } catch (err) {
         console.error('Erro ao carregar entregas:', err);
       } finally {
@@ -41,15 +41,14 @@ function ListaEntregas() {
     fetchData();
   }, []);
 
-  // ============================================================
-  // 🔥 FILTRAGEM DINÂMICA
-  // ============================================================
+  // =====================================================================
+  // 🔥 FILTRAGEM (sempre filtrando pela loja do usuário)
+  // =====================================================================
   useEffect(() => {
     let list = [...entregas];
 
-    if (lojaFilter) {
-      list = list.filter((e) => String(e.loja) === String(lojaFilter));
-    }
+    // filtrar pela loja fixa do usuário
+    list = list.filter((e) => String(e.loja) === String(lojaDoUsuario));
 
     if (statusFilter) {
       list = list.filter((e) => e.status === statusFilter);
@@ -61,19 +60,19 @@ function ListaEntregas() {
     }
 
     setFiltered(list);
-  }, [search, statusFilter, lojaFilter, entregas]);
+  }, [search, statusFilter, entregas, lojaDoUsuario]);
 
-  // ============================================================
+  // =====================================================================
   // 🔥 Atualizar lista após criar/editar
-  // ============================================================
+  // =====================================================================
   const refreshEntregas = async () => {
     const res = await djangoApi.get('/entregas/');
     setEntregas(res.data);
   };
 
-  // ============================================================
+  // =====================================================================
   // ❌ Exclusão
-  // ============================================================
+  // =====================================================================
   const excluirEntrega = async (id) => {
     if (!window.confirm('Deseja excluir esta entrega?')) return;
 
@@ -85,9 +84,9 @@ function ListaEntregas() {
     }
   };
 
-  // ============================================================
+  // =====================================================================
   // 🔥 Tela de Detalhe
-  // ============================================================
+  // =====================================================================
   if (selectedEntrega) {
     return (
       <EntregaDetalhe
@@ -98,9 +97,9 @@ function ListaEntregas() {
     );
   }
 
-  // ============================================================
+  // =====================================================================
   // 🔥 Tela de Criar Entrega
-  // ============================================================
+  // =====================================================================
   if (isCreating) {
     return (
       <CriarEntregaForm
@@ -113,9 +112,9 @@ function ListaEntregas() {
     );
   }
 
-  // ============================================================
+  // =====================================================================
   // 🔥 LISTAGEM PRINCIPAL
-  // ============================================================
+  // =====================================================================
   return (
     <div>
       <HeaderFuncionario
@@ -126,13 +125,15 @@ function ListaEntregas() {
           window.location.href = '/';
         }}
       />
+
       <div className="p-6 max-w-5xl mx-auto">
         <h1 className="text-3xl font-bold text-[#d20000] mb-6">
           Lista de Entregas
         </h1>
 
         {/* 🔥 FILTROS */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        {/* Removido o filtro de LOJA */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           {/* Buscar */}
           <input
             type="text"
@@ -141,20 +142,6 @@ function ListaEntregas() {
             onChange={(e) => setSearch(e.target.value)}
             className="px-3 py-2 border rounded-md shadow-sm focus:border-[#d20000]"
           />
-
-          {/* Loja */}
-          <select
-            value={lojaFilter}
-            onChange={(e) => setLojaFilter(e.target.value)}
-            className="px-3 py-2 border rounded-md shadow-sm"
-          >
-            <option value="">Todas as lojas</option>
-            {lojas.map((loja) => (
-              <option key={loja.id} value={loja.id}>
-                {loja.nome}
-              </option>
-            ))}
-          </select>
 
           {/* Status */}
           <select

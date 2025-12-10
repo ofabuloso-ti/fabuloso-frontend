@@ -1,17 +1,7 @@
+// src/components/Atendente/AtendenteHeader.jsx
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
 
-function AtendenteHeader() {
-  let location = { pathname: '' };
-
-  try {
-    location = useLocation();
-  } catch {
-    // evita crash caso esteja fora do Router
-  }
-
-  const isActive = (path) => location.pathname === path;
-
+function AtendenteHeader({ activeTab, setActiveTab }) {
   return (
     <header className="w-full bg-white shadow-md p-4 flex justify-between items-center">
       <div>
@@ -19,27 +9,27 @@ function AtendenteHeader() {
       </div>
 
       <nav className="flex gap-4">
-        <Link
-          to="/dashboardAtendente"
+        <button
+          onClick={() => setActiveTab('dashboard')}
           className={`px-3 py-1 rounded ${
-            isActive('/dashboardAtendente')
+            activeTab === 'dashboard'
               ? 'bg-blue-500 text-white'
               : 'text-gray-700'
           }`}
         >
           Dashboard
-        </Link>
+        </button>
 
-        <Link
-          to="/atendenteEntregas"
+        <button
+          onClick={() => setActiveTab('entregas')}
           className={`px-3 py-1 rounded ${
-            isActive('/atendenteEntregas')
+            activeTab === 'entregas'
               ? 'bg-blue-500 text-white'
               : 'text-gray-700'
           }`}
         >
           Entregas
-        </Link>
+        </button>
       </nav>
     </header>
   );

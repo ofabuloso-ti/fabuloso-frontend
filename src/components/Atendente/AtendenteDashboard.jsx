@@ -1,4 +1,5 @@
 // src/components/Atendente/AtendenteDashboard.jsx
+// src/components/Atendente/AtendenteDashboard.jsx
 import React, { useEffect, useState } from 'react';
 import djangoApi from '../../api/djangoApi';
 import AtendenteHeader from './AtendenteHeader';

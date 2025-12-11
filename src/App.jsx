@@ -179,13 +179,13 @@ function App() {
     try {
       const res = await djangoApi.post('auth/login/', { username, password });
       setUser(res.data);
+      console.log('TIPO RECEBIDO:', res.data.user_type);
 
       const tipo = res.data.user_type?.trim().toLowerCase();
 
       if (tipo === 'admin') navigate('/admin');
       else if (tipo === 'motoboy') navigate('/motoboy');
-      else if (tipo === 'atendente')
-        navigate('/atendente'); // <<< IGUAL AOS OUTROS
+      else if (tipo === 'atendente') navigate('/atendente');
       else navigate('/funcionario');
     } catch {
       setError('Nome de usuário ou senha incorretos.');

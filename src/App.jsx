@@ -391,7 +391,7 @@ function App() {
         path="/atendente/dashboard"
         element={
           user && user.user_type === 'atendente' ? (
-            <DashboardAtendente user={user} onLogout={handleLogout} />
+            <DashboardAtendente initialTab="dashboard" />
           ) : (
             <Navigate to="/login" />
           )
@@ -402,11 +402,7 @@ function App() {
         path="/atendente/entregas"
         element={
           user && user.user_type === 'atendente' ? (
-            <DashboardAtendente
-              user={user}
-              onLogout={handleLogout}
-              initialTab="entregas"
-            />
+            <DashboardAtendente initialTab="entregas" />
           ) : (
             <Navigate to="/login" />
           )

@@ -61,6 +61,7 @@ function AtendenteDashboard({ initialTab = 'dashboard' }) {
       <AtendenteHeader
         onLogout={() => {
           localStorage.removeItem('token');
+          localStorage.removeItem('user'); // <<< ESSENCIAL
           window.location.href = '/login';
         }}
       />

@@ -180,12 +180,12 @@ function App() {
       const res = await djangoApi.post('auth/login/', { username, password });
       setUser(res.data);
 
-      // Redirecionamento por tipo de usuário
-      if (res.data.user_type === 'admin') navigate('/admin');
-      else if (res.data.user_type === 'motoboy') navigate('/motoboy');
-      else if (res.data.user_type === 'atendente')
-        navigate('/AtendenteDashboard');
-      else navigate('/funcionario'); // funcionário
+      const tipo = res.data.user_type?.trim().toLowerCase();
+
+      if (tipo === 'admin') navigate('/admin');
+      else if (tipo === 'motoboy') navigate('/motoboy');
+      else if (tipo === 'atendente') navigate('/AtendenteDashboard');
+      else navigate('/funcionario');
     } catch {
       setError('Nome de usuário ou senha incorretos.');
     }

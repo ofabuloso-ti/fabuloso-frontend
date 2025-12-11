@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import djangoApi from '../../api/djangoApi';
 import AtendenteHeader from './AtendenteHeader';
 
-function AtendenteDashboard({ initialTab = 'dashboard' }) {
+function AtendenteDashboard({ user, onLogout, initialTab = 'dashboard' }) {
   const [activeTab, setActiveTab] = useState(initialTab);
   const [loading, setLoading] = useState(true);
 
@@ -14,12 +14,11 @@ function AtendenteDashboard({ initialTab = 'dashboard' }) {
   const [statusFilter, setStatusFilter] = useState('');
   const [motoboyFilter, setMotoboyFilter] = useState('');
 
-  const user = JSON.parse(localStorage.getItem('user'));
   const lojaID = user?.loja;
 
-  // ===============================
-  // 🔥 CARREGAR ENTREGAS + MOTOBÓYS
-  // ===============================
+  /* -------------------------------------------------------------------------- */
+  /*                           CARREGAR ENTREGAS E USERS                        */
+  /* -------------------------------------------------------------------------- */
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -38,9 +37,9 @@ function AtendenteDashboard({ initialTab = 'dashboard' }) {
     loadData();
   }, []);
 
-  // ===============================
-  // 🔥 FILTRAR ENTREGAS
-  // ===============================
+  /* -------------------------------------------------------------------------- */
+  /*                                FILTRAGENS                                  */
+  /* -------------------------------------------------------------------------- */
   const entregasFiltradas = entregas
     .filter((e) => String(e.loja) === String(lojaID))
     .filter((e) =>
@@ -50,21 +49,15 @@ function AtendenteDashboard({ initialTab = 'dashboard' }) {
     )
     .filter((e) => (statusFilter ? e.status === statusFilter : true))
     .filter((e) =>
-      motoboyFilter ? String(e.motoboy) === motoboyFilter : true,
+      motoboyFilter ? String(e.motoboy) === String(motoboyFilter) : true,
     );
 
-  // ===============================
-  // 🔥 INTERFACE
-  // ===============================
+  /* -------------------------------------------------------------------------- */
+  /*                                INTERFACE                                   */
+  /* -------------------------------------------------------------------------- */
   return (
     <div>
-      <AtendenteHeader
-        onLogout={() => {
-          localStorage.removeItem('token');
-          localStorage.removeItem('user'); // <<< ESSENCIAL
-          window.location.href = '/login';
-        }}
-      />
+      <AtendenteHeader onLogout={onLogout} />
 
       <div className="p-6 max-w-5xl mx-auto">
         <h1 className="text-3xl font-bold text-[#d20000] mb-6">
@@ -77,14 +70,10 @@ function AtendenteDashboard({ initialTab = 'dashboard' }) {
           <p className="text-center text-gray-600">Carregando...</p>
         ) : (
           <>
-            {/* ============================ */}
-            {/* 🔥 DASHBOARD */}
-            {/* ============================ */}
+            {/* ------------------------------ DASHBOARD ------------------------------ */}
             {activeTab === 'dashboard' && <p>Resumo do atendente aqui…</p>}
 
-            {/* ============================ */}
-            {/* 🔥 TABELA DE ENTREGAS */}
-            {/* ============================ */}
+            {/* ------------------------------- ENTREGAS ------------------------------ */}
             {activeTab === 'entregas' && (
               <div>
                 {/* FILTROS */}

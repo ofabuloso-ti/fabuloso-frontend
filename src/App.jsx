@@ -379,7 +379,7 @@ function App() {
       <Route
         path="/atendente"
         element={
-          user && user.user_type === 'atendente' ? (
+          user?.user_type === 'atendente' ? (
             <DashboardAtendente user={user} onLogout={handleLogout} />
           ) : (
             <Navigate to="/login" />
@@ -390,8 +390,12 @@ function App() {
       <Route
         path="/atendente/dashboard"
         element={
-          user && user.user_type === 'atendente' ? (
-            <DashboardAtendente initialTab="dashboard" />
+          user?.user_type === 'atendente' ? (
+            <DashboardAtendente
+              initialTab="dashboard"
+              user={user}
+              onLogout={handleLogout}
+            />
           ) : (
             <Navigate to="/login" />
           )
@@ -401,8 +405,12 @@ function App() {
       <Route
         path="/atendente/entregas"
         element={
-          user && user.user_type === 'atendente' ? (
-            <DashboardAtendente initialTab="entregas" />
+          user?.user_type === 'atendente' ? (
+            <DashboardAtendente
+              initialTab="entregas"
+              user={user}
+              onLogout={handleLogout}
+            />
           ) : (
             <Navigate to="/login" />
           )

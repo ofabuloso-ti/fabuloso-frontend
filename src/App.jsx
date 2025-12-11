@@ -185,7 +185,7 @@ function App() {
       else if (res.data.user_type === 'motoboy') navigate('/motoboy');
       else if (res.data.user_type === 'atendente')
         navigate('/AtendenteDashboard');
-      else navigate('/funcionario'); // funcionário + atendente
+      else navigate('/funcionario'); // funcionário
     } catch {
       setError('Nome de usuário ou senha incorretos.');
     }
@@ -374,7 +374,7 @@ function App() {
       {/* ----------------------------- ATENDENTE ----------------------------- */}
 
       <Route
-        path="/dashboardAtendente"
+        path="/AtendenteDashboard"
         element={
           user && user.user_type === 'atendente' ? (
             <DashboardAtendente user={user} onLogout={handleLogout} />

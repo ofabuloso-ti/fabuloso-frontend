@@ -387,6 +387,32 @@ function App() {
         }
       />
 
+      <Route
+        path="/atendente/dashboard"
+        element={
+          user && user.user_type === 'atendente' ? (
+            <DashboardAtendente user={user} onLogout={handleLogout} />
+          ) : (
+            <Navigate to="/login" />
+          )
+        }
+      />
+
+      <Route
+        path="/atendente/entregas"
+        element={
+          user && user.user_type === 'atendente' ? (
+            <DashboardAtendente
+              user={user}
+              onLogout={handleLogout}
+              initialTab="entregas"
+            />
+          ) : (
+            <Navigate to="/login" />
+          )
+        }
+      />
+
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>

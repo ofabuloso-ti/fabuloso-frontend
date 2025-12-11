@@ -3,8 +3,8 @@ import React, { useEffect, useState } from 'react';
 import djangoApi from '../../api/djangoApi';
 import AtendenteHeader from './AtendenteHeader';
 
-function AtendenteDashboard() {
-  const [activeTab, setActiveTab] = useState('dashboard');
+function AtendenteDashboard({ initialTab = 'dashboard' }) {
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [loading, setLoading] = useState(true);
 
   const [entregas, setEntregas] = useState([]);
@@ -15,7 +15,7 @@ function AtendenteDashboard() {
   const [motoboyFilter, setMotoboyFilter] = useState('');
 
   const user = JSON.parse(localStorage.getItem('user'));
-  const lojaID = user?.loja_id;
+  const lojaID = user?.loja;
 
   // ===============================
   // 🔥 CARREGAR ENTREGAS + MOTOBÓYS
@@ -54,41 +54,22 @@ function AtendenteDashboard() {
     );
 
   // ===============================
-  // 🔥 ESTATÍSTICAS DO DIA
-  // ===============================
-  const hoje = new Date().toISOString().split('T')[0];
-
-  const entregasHoje = entregasFiltradas.filter((e) => e.data === hoje);
-
-  const stats = {
-    pendentes: entregasHoje.filter((e) => e.status === 'pendente').length,
-    emEntrega: entregasHoje.filter((e) => e.status === 'em_entrega').length,
-    concluidas: entregasHoje.filter((e) => e.status === 'concluida').length,
-  };
-
-  const entregasPorMotoboy = {};
-  entregasHoje.forEach((e) => {
-    const nome = e.motoboy_nome || 'Sem motoboy';
-    entregasPorMotoboy[nome] = (entregasPorMotoboy[nome] || 0) + 1;
-  });
-
-  // ===============================
   // 🔥 INTERFACE
   // ===============================
   return (
     <div>
       <AtendenteHeader
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
         onLogout={() => {
           localStorage.removeItem('token');
-          window.location.href = '/';
+          window.location.href = '/login';
         }}
       />
 
       <div className="p-6 max-w-5xl mx-auto">
         <h1 className="text-3xl font-bold text-[#d20000] mb-6">
-          Painel do Atendente
+          {activeTab === 'dashboard'
+            ? 'Painel do Atendente'
+            : 'Lista de Entregas'}
         </h1>
 
         {loading ? (
@@ -98,57 +79,15 @@ function AtendenteDashboard() {
             {/* ============================ */}
             {/* 🔥 DASHBOARD */}
             {/* ============================ */}
-            {activeTab === 'dashboard' && (
-              <div>
-                <h2 className="text-xl font-semibold mb-4">Resumo de Hoje</h2>
-
-                {/* CARDS */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-                  <div className="p-4 bg-gray-200 rounded shadow text-center">
-                    <h3 className="font-bold text-lg">Pendentes</h3>
-                    <p className="text-2xl">{stats.pendentes}</p>
-                  </div>
-
-                  <div className="p-4 bg-gray-200 rounded shadow text-center">
-                    <h3 className="font-bold text-lg">Em Entrega</h3>
-                    <p className="text-2xl">{stats.emEntrega}</p>
-                  </div>
-
-                  <div className="p-4 bg-gray-200 rounded shadow text-center">
-                    <h3 className="font-bold text-lg">Concluídas</h3>
-                    <p className="text-2xl">{stats.concluidas}</p>
-                  </div>
-                </div>
-
-                {/* Motoboy ranking */}
-                <h3 className="text-lg font-semibold mb-2">
-                  Entregas por Motoboy
-                </h3>
-                <div className="bg-white border rounded p-4 shadow mb-6">
-                  {Object.keys(entregasPorMotoboy).length === 0 ? (
-                    <p>Nenhuma entrega hoje.</p>
-                  ) : (
-                    <ul>
-                      {Object.entries(entregasPorMotoboy).map(([nome, qtd]) => (
-                        <li key={nome} className="py-1 border-b">
-                          <strong>{nome}:</strong> {qtd} entregas
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              </div>
-            )}
+            {activeTab === 'dashboard' && <p>Resumo do atendente aqui…</p>}
 
             {/* ============================ */}
             {/* 🔥 TABELA DE ENTREGAS */}
             {/* ============================ */}
             {activeTab === 'entregas' && (
               <div>
-                <h2 className="text-xl font-semibold mb-4">Entregas</h2>
-
                 {/* FILTROS */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                   <input
                     type="text"
                     placeholder="Buscar por código..."
@@ -162,7 +101,7 @@ function AtendenteDashboard() {
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
                   >
-                    <option value="">Status</option>
+                    <option value="">Todos os Status</option>
                     <option value="pendente">Pendente</option>
                     <option value="em_entrega">Em entrega</option>
                     <option value="concluida">Concluída</option>
@@ -188,11 +127,9 @@ function AtendenteDashboard() {
                     <thead>
                       <tr className="bg-gray-200">
                         <th className="p-3 border">Código</th>
-                        <th className="p-3 border">Status</th>
-                        <th className="p-3 border">Saída</th>
-                        <th className="p-3 border">Conclusão</th>
-                        <th className="p-3 border">Data</th>
+                        <th className="p-3 border">Loja</th>
                         <th className="p-3 border">Motoboy</th>
+                        <th className="p-3 border">Status</th>
                       </tr>
                     </thead>
 
@@ -200,15 +137,11 @@ function AtendenteDashboard() {
                       {entregasFiltradas.map((e) => (
                         <tr key={e.id} className="hover:bg-gray-50">
                           <td className="p-3 border">{e.codigo_pedido}</td>
-                          <td className="p-3 border">{e.status}</td>
-                          <td className="p-3 border">{e.hora_saida || '—'}</td>
-                          <td className="p-3 border">
-                            {e.hora_conclusao || '—'}
-                          </td>
-                          <td className="p-3 border">{e.data}</td>
+                          <td className="p-3 border">{e.loja_nome}</td>
                           <td className="p-3 border">
                             {e.motoboy_nome || '—'}
                           </td>
+                          <td className="p-3 border">{e.status}</td>
                         </tr>
                       ))}
                     </tbody>

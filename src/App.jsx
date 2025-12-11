@@ -224,6 +224,8 @@ function App() {
                   ? '/admin'
                   : user.user_type === 'motoboy'
                   ? '/motoboy'
+                  : user.user_type === 'atendente'
+                  ? '/atendente'
                   : '/funcionario'
               }
             />

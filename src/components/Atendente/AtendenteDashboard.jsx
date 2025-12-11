@@ -77,7 +77,7 @@ function AtendenteDashboard() {
   // ===============================
   return (
     <div>
-      <HeaderFuncionario
+      <AtendenteHeader
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         onLogout={() => {

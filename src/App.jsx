@@ -385,7 +385,7 @@ function App() {
       />
 
       <Route
-        path="/atendenteEntregas"
+        path="/AtendenteDashboard"
         element={
           user && user.user_type === 'atendente' ? (
             <AtendenteEntregas user={user} onLogout={handleLogout} />

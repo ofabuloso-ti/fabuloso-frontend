@@ -2,10 +2,12 @@
 import React, { useEffect, useState } from 'react';
 import djangoApi from '../../api/djangoApi';
 import AtendenteHeader from './AtendenteHeader';
+import { useLocation } from 'react-router-dom';
 
 function AtendenteDashboard({ user, onLogout, initialTab = 'dashboard' }) {
   const [activeTab, setActiveTab] = useState(initialTab);
   const [loading, setLoading] = useState(true);
+  const location = useLocation();
 
   const [entregas, setEntregas] = useState([]);
   const [motoboys, setMotoboys] = useState([]);
@@ -51,6 +53,14 @@ function AtendenteDashboard({ user, onLogout, initialTab = 'dashboard' }) {
     .filter((e) =>
       motoboyFilter ? String(e.motoboy) === String(motoboyFilter) : true,
     );
+
+  useEffect(() => {
+    if (location.pathname.includes('/atendente/entregas')) {
+      setActiveTab('entregas');
+    } else {
+      setActiveTab('dashboard');
+    }
+  }, [location.pathname]);
 
   /* -------------------------------------------------------------------------- */
   /*                                INTERFACE                                   */

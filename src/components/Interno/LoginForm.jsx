@@ -35,7 +35,7 @@ const LoginForm = () => {
           break;
 
         case 'atendente':
-          navigate('/dashboardAtendente');
+          navigate('/AtendenteDashboard');
           break;
 
         case 'funcionario':

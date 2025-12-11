@@ -183,6 +183,8 @@ function App() {
       // Redirecionamento por tipo de usuário
       if (res.data.user_type === 'admin') navigate('/admin');
       else if (res.data.user_type === 'motoboy') navigate('/motoboy');
+      else if (res.data.user_type === 'atendente')
+        navigate('/dashboardAtendente');
       else navigate('/funcionario'); // funcionário + atendente
     } catch {
       setError('Nome de usuário ou senha incorretos.');

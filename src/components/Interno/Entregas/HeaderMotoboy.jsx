@@ -97,17 +97,14 @@ export default function HeaderMotoboy({ onLogout }) {
             </button>
 
             <button
-              onClick={() => {
-                navigate('/motoboy/entregas');
-                setMenuOpen(false);
-              }}
-              className={`px-4 py-2 text-left ${
-                location.pathname.includes('/motoboy/entregas')
+              onClick={() => navigate('/motoboy')}
+              className={`px-4 py-2 rounded-md transition ${
+                location.pathname === '/motoboy'
                   ? 'bg-[#d20000] text-white'
-                  : 'hover:bg-gray-100'
+                  : 'hover:bg-gray-200'
               }`}
             >
-              Minhas Entregas
+              Entregas
             </button>
 
             <button

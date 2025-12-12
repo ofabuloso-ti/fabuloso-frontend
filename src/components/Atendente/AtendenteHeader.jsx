@@ -57,8 +57,8 @@ export default function AtendenteHeader({ onLogout }) {
           )}
         </button>
 
-        {/* LOGO */}
-        <Link to="/atendente/dashboard">
+        {/* LOGO → deve ir para HOME */}
+        <Link to="/">
           <img src={logoDesktop} alt="Logo" className="h-12 cursor-pointer" />
         </Link>
 
@@ -108,7 +108,6 @@ export default function AtendenteHeader({ onLogout }) {
 
       {/* MENU DESKTOP */}
       <nav className="hidden md:flex space-x-6 font-semibold text-gray-700">
-        {/* Dashboard */}
         <button
           onClick={() => navigate('/atendente/dashboard')}
           className={`px-4 py-2 rounded-md transition ${
@@ -120,7 +119,6 @@ export default function AtendenteHeader({ onLogout }) {
           Dashboard
         </button>
 
-        {/* Entregas */}
         <button
           onClick={() => navigate('/atendente/entregas')}
           className={`px-4 py-2 rounded-md transition ${

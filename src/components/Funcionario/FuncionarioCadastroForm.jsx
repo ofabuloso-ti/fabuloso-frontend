@@ -22,7 +22,7 @@ function FuncionarioCadastroForm({ onSave, onCancel, funcionario }) {
         username: funcionario.username,
         email: funcionario.email || '',
         password: '',
-        user_type: funcionario.user_type, // <-- IMPORTANTE!
+        user_type: funcionario.user_type,
       });
     }
   }, [funcionario]);
@@ -32,6 +32,12 @@ function FuncionarioCadastroForm({ onSave, onCancel, funcionario }) {
   // ===============================
   const handleChange = (e) => {
     const { name, value } = e.target;
+
+    // 🚫 FUNCIONÁRIO NÃO PODE VIRAR ATENDENTE/MOTOBOY
+    if (funcionario?.user_type === 'funcionario' && name === 'user_type') {
+      return;
+    }
+
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -58,15 +64,24 @@ function FuncionarioCadastroForm({ onSave, onCancel, funcionario }) {
       let resposta;
 
       if (funcionario) {
-        // EDITAR FUNCIONÁRIO
+        // EDITAR
         resposta = await djangoApi.patch(`/users/${funcionario.id}/`, {
           username: formData.username,
           email: formData.email,
-          user_type: formData.user_type,
+          user_type:
+            funcionario.user_type === 'funcionario'
+              ? 'funcionario' // 🔒 mantém funcionário fixo
+              : formData.user_type,
         });
       } else {
-        // CRIAR FUNCIONÁRIO
-        resposta = await djangoApi.post('/users/criar_usuario_loja/', formData);
+        // CRIAR (APENAS ATENDENTE OU MOTOBOY)
+        resposta = await djangoApi.post('/users/criar_usuario_loja/', {
+          ...formData,
+          user_type:
+            formData.user_type === 'funcionario'
+              ? 'atendente' // 🔒 segurança extra
+              : formData.user_type,
+        });
       }
 
       onSave(resposta.data);
@@ -148,12 +163,20 @@ function FuncionarioCadastroForm({ onSave, onCancel, funcionario }) {
             name="user_type"
             value={formData.user_type}
             onChange={handleChange}
-            className="w-full mt-1 border rounded-md px-3 py-2 bg-white"
+            disabled={funcionario?.user_type === 'funcionario'} // 🔒 funcionário não troca cargo
+            className={`w-full mt-1 border rounded-md px-3 py-2 bg-white ${
+              funcionario?.user_type === 'funcionario' ? 'bg-gray-200' : ''
+            }`}
           >
             <option value="atendente">Atendente</option>
             <option value="motoboy">Motoboy</option>
-            <option value="funcionario">Funcionário</option>
           </select>
+
+          {funcionario?.user_type === 'funcionario' && (
+            <p className="text-sm text-gray-500 mt-1">
+              O cargo "funcionário" não pode ser alterado.
+            </p>
+          )}
         </div>
 
         {/* Botões */}

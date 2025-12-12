@@ -1,3 +1,4 @@
+// src/components/Interno/Entregas/MotoboyDashboard.jsx
 import React, { useEffect, useState } from 'react';
 import djangoApi from '../../../api/djangoApi';
 import dayjs from 'dayjs';
@@ -13,11 +14,24 @@ export default function MotoboyDashboard({ user, onLogout }) {
   const [codigo, setCodigo] = useState('');
   const navigate = useNavigate();
 
+  /* -------------------------------------------------------------------------- */
+  /*                              🔥 CARREGAR ENTREGAS                          */
+  /* -------------------------------------------------------------------------- */
   const loadEntregas = async () => {
     try {
       setLoading(true);
       const { data } = await djangoApi.get('/entregas/');
-      setEntregas(data);
+
+      // Motoboy só vê entregas dele
+      const minhas = data.filter((e) => String(e.motoboy) === String(user.id));
+
+      // organizar (pendente → em entrega → concluída)
+      const ordenadas = [...minhas].sort((a, b) => {
+        const ordem = { pendente: 1, em_entrega: 2, concluida: 3 };
+        return ordem[a.status] - ordem[b.status];
+      });
+
+      setEntregas(ordenadas);
     } catch (e) {
       console.error(e);
       setErro('Erro ao carregar entregas.');
@@ -30,24 +44,37 @@ export default function MotoboyDashboard({ user, onLogout }) {
     loadEntregas();
   }, []);
 
+  /* -------------------------------------------------------------------------- */
+  /*                             🔥 CRIAR ENTREGA                                */
+  /* -------------------------------------------------------------------------- */
   const criarEntrega = async () => {
-    if (!codigo.trim()) return alert('Digite o código!');
+    if (!codigo.trim()) return alert('Digite o código da entrega!');
     try {
-      await djangoApi.post('/entregas/', { codigo_pedido: codigo });
+      await djangoApi.post('/entregas/', {
+        codigo_pedido: codigo,
+        motoboy: user.id, // 🔥 agora vincula ao motoboy
+        loja: user.loja, // 🔥 entrega pertence à loja do motoboy
+        status: 'pendente',
+      });
+
       setCodigo('');
       setShowForm(false);
       loadEntregas();
-    } catch {
+    } catch (err) {
+      console.error(err);
       alert('Erro ao criar entrega.');
     }
   };
 
+  /* -------------------------------------------------------------------------- */
+  /*                      🔥 INICIAR / FINALIZAR ENTREGA                         */
+  /* -------------------------------------------------------------------------- */
   const iniciarEntrega = async (id) => {
     try {
       await djangoApi.post(`/entregas/${id}/iniciar/`);
       loadEntregas();
     } catch {
-      alert('Erro ao iniciar.');
+      alert('Erro ao iniciar entrega.');
     }
   };
 
@@ -56,7 +83,7 @@ export default function MotoboyDashboard({ user, onLogout }) {
       await djangoApi.post(`/entregas/${id}/concluir/`);
       loadEntregas();
     } catch {
-      alert('Erro ao concluir.');
+      alert('Erro ao concluir entrega.');
     }
   };
 
@@ -65,26 +92,26 @@ export default function MotoboyDashboard({ user, onLogout }) {
   return (
     <>
       {/* HEADER */}
-      <HeaderMotoboy activeTab="motoboy" onLogout={onLogout} />
+      <HeaderMotoboy onLogout={onLogout} />
 
       <div className="p-4 md:p-8 bg-gray-100 min-h-screen">
-        {/* TÍTULO */}
+        {/* ---------------------------------------------------------------------- */}
+        {/*                               TÍTULO                                   */}
+        {/* ---------------------------------------------------------------------- */}
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl md:text-3xl font-bold text-[#d20000]">
-            Minhas Entregas
-          </h1>
+          <h1 className="text-3xl font-bold text-[#d20000]">Minhas Entregas</h1>
 
           <button
             onClick={() => setShowForm(true)}
-            className="bg-[#d20000] text-white px-4 py-2 rounded shadow hover:bg-red-700"
+            className="bg-[#d20000] text-white px-5 py-2 rounded-lg font-semibold shadow hover:bg-red-700 transition"
           >
-            Nova Entrega
+            + Nova
           </button>
         </div>
 
-        {/* FORMULÁRIO */}
+        {/* FORM DE NOVA ENTREGA */}
         {showForm && (
-          <div className="bg-white p-4 rounded shadow mb-6 max-w-md">
+          <div className="bg-white p-5 rounded-lg shadow mb-6 max-w-md">
             <h2 className="text-xl font-bold mb-3 text-[#d20000]">
               Cadastrar Entrega
             </h2>
@@ -115,28 +142,44 @@ export default function MotoboyDashboard({ user, onLogout }) {
           </div>
         )}
 
-        {/* LISTA */}
+        {/* ---------------------------------------------------------------------- */}
+        {/*                               LISTA                                    */}
+        {/* ---------------------------------------------------------------------- */}
         {loading ? (
           <p>Carregando...</p>
         ) : entregas.length === 0 ? (
-          <p className="text-gray-600">Nenhuma entrega cadastrada hoje.</p>
+          <p className="text-gray-600">Nenhuma entrega cadastrada.</p>
         ) : (
           <>
-            {/* MOBILE (CARDS) */}
+            {/* --------------------------- MOBILE CARDS --------------------------- */}
             <div className="md:hidden space-y-4">
               {entregas.map((e) => (
-                <div key={e.id} className="bg-white rounded shadow p-4 border">
-                  <p>
-                    <strong>Código:</strong> {e.codigo}
+                <div
+                  key={e.id}
+                  className="bg-white rounded-lg shadow p-4 border"
+                >
+                  <div className="flex justify-between">
+                    <p className="font-bold text-lg text-[#d20000]">
+                      {e.codigo_pedido}
+                    </p>
+                    <span
+                      className={`text-sm font-semibold ${
+                        e.status === 'pendente'
+                          ? 'text-gray-700'
+                          : e.status === 'em_entrega'
+                          ? 'text-blue-600'
+                          : 'text-green-600'
+                      }`}
+                    >
+                      {e.status}
+                    </span>
+                  </div>
+
+                  <p className="mt-1 text-sm">
+                    Saída: <strong>{hora(e.hora_saida)}</strong>
                   </p>
-                  <p>
-                    <strong>Status:</strong> {e.status}
-                  </p>
-                  <p>
-                    <strong>Saída:</strong> {hora(e.hora_saida)}
-                  </p>
-                  <p>
-                    <strong>Conclusão:</strong> {hora(e.hora_conclusao)}
+                  <p className="text-sm">
+                    Conclusão: <strong>{hora(e.hora_conclusao)}</strong>
                   </p>
 
                   <div className="mt-3 flex gap-3">
@@ -148,6 +191,7 @@ export default function MotoboyDashboard({ user, onLogout }) {
                         Iniciar
                       </button>
                     )}
+
                     {e.status === 'em_entrega' && (
                       <button
                         onClick={() => concluirEntrega(e.id)}
@@ -156,6 +200,7 @@ export default function MotoboyDashboard({ user, onLogout }) {
                         Finalizar
                       </button>
                     )}
+
                     {e.status === 'concluida' && (
                       <span className="text-green-700 font-bold">
                         ✔ Finalizada
@@ -166,7 +211,7 @@ export default function MotoboyDashboard({ user, onLogout }) {
               ))}
             </div>
 
-            {/* DESKTOP (TABELA) */}
+            {/* ----------------------------- DESKTOP ------------------------------ */}
             <table className="hidden md:table w-full bg-white shadow rounded border-collapse">
               <thead>
                 <tr className="bg-gray-100">
@@ -180,7 +225,7 @@ export default function MotoboyDashboard({ user, onLogout }) {
               <tbody>
                 {entregas.map((e) => (
                   <tr key={e.id} className="hover:bg-gray-50">
-                    <td className="border px-4 py-2">{e.codigo}</td>
+                    <td className="border px-4 py-2">{e.codigo_pedido}</td>
                     <td className="border px-4 py-2 capitalize">{e.status}</td>
                     <td className="border px-4 py-2">{hora(e.hora_saida)}</td>
                     <td className="border px-4 py-2">
@@ -196,6 +241,7 @@ export default function MotoboyDashboard({ user, onLogout }) {
                           Iniciar
                         </button>
                       )}
+
                       {e.status === 'em_entrega' && (
                         <button
                           onClick={() => concluirEntrega(e.id)}
@@ -204,6 +250,7 @@ export default function MotoboyDashboard({ user, onLogout }) {
                           Finalizar
                         </button>
                       )}
+
                       {e.status === 'concluida' && (
                         <span className="text-green-700 font-bold">
                           ✔ Finalizada
@@ -216,14 +263,6 @@ export default function MotoboyDashboard({ user, onLogout }) {
             </table>
           </>
         )}
-
-        {/* Botão voltar ao início */}
-        <button
-          onClick={() => navigate('/')}
-          className="mt-8 bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
-        >
-          Voltar ao Início
-        </button>
       </div>
     </>
   );

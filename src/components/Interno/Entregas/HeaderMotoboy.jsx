@@ -3,13 +3,15 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import logoDesktop from '/assets/home/logo.png';
 
-export default function HeaderMotoboy({ activeTab, onLogout }) {
+export default function HeaderMotoboy({ onLogout }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
 
-  // fechar menu ao clicar fora
+  /* -------------------------------------------------------------------------- */
+  /*                    FECHAR MENU AO CLICAR FORA DO DROPDOWN                 */
+  /* -------------------------------------------------------------------------- */
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (menuRef.current && !menuRef.current.contains(e.target)) {
@@ -20,10 +22,25 @@ export default function HeaderMotoboy({ activeTab, onLogout }) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  /* -------------------------------------------------------------------------- */
+  /*                               LOGOUT CORRIGIDO                             */
+  /* -------------------------------------------------------------------------- */
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+
+    if (onLogout) onLogout(); // dispara logout do App.jsx
+
+    navigate('/login'); // redireciona corretamente
+  };
+
+  /* -------------------------------------------------------------------------- */
+  /*                                  RENDER                                    */
+  /* -------------------------------------------------------------------------- */
   return (
     <header className="flex items-center justify-between bg-white p-4 shadow-md sticky top-0 z-50">
       <div className="flex items-center space-x-3 relative" ref={menuRef}>
-        {/* HAMBURGUER MOBILE */}
+        {/* HAMBURGER MOBILE */}
         <button
           className="md:hidden focus:outline-none"
           onClick={() => setMenuOpen(!menuOpen)}
@@ -58,21 +75,20 @@ export default function HeaderMotoboy({ activeTab, onLogout }) {
         </button>
 
         {/* LOGO */}
-        <Link to="/motoboy/dashboard">
+        <Link to="/motoboy">
           <img src={logoDesktop} alt="Logo" className="h-12 cursor-pointer" />
         </Link>
 
         {/* MENU MOBILE */}
         {menuOpen && (
           <nav className="absolute top-14 left-0 w-56 bg-white shadow-lg rounded-md flex flex-col py-2 md:hidden z-50">
-            {/* Dashboard */}
             <button
               onClick={() => {
-                navigate('/motoboy/dashboard');
+                navigate('/motoboy');
                 setMenuOpen(false);
               }}
               className={`px-4 py-2 text-left ${
-                location.pathname.includes('/motoboy/dashboard')
+                location.pathname === '/motoboy'
                   ? 'bg-[#d20000] text-white'
                   : 'hover:bg-gray-100'
               }`}
@@ -80,7 +96,6 @@ export default function HeaderMotoboy({ activeTab, onLogout }) {
               Dashboard
             </button>
 
-            {/* Entregas */}
             <button
               onClick={() => {
                 navigate('/motoboy/entregas');
@@ -92,12 +107,11 @@ export default function HeaderMotoboy({ activeTab, onLogout }) {
                   : 'hover:bg-gray-100'
               }`}
             >
-              Entregas
+              Minhas Entregas
             </button>
 
-            {/* Logout */}
             <button
-              onClick={onLogout}
+              onClick={handleLogout}
               className="px-4 py-2 text-left text-red-600 hover:bg-gray-100"
             >
               Sair
@@ -108,11 +122,10 @@ export default function HeaderMotoboy({ activeTab, onLogout }) {
 
       {/* MENU DESKTOP */}
       <nav className="hidden md:flex space-x-6 font-semibold text-gray-700">
-        {/* Dashboard */}
         <button
-          onClick={() => navigate('/motoboy/dashboard')}
+          onClick={() => navigate('/motoboy')}
           className={`px-4 py-2 rounded-md transition ${
-            location.pathname.includes('/motoboy/dashboard')
+            location.pathname === '/motoboy'
               ? 'bg-[#d20000] text-white'
               : 'hover:bg-gray-200'
           }`}
@@ -120,7 +133,6 @@ export default function HeaderMotoboy({ activeTab, onLogout }) {
           Dashboard
         </button>
 
-        {/* Entregas */}
         <button
           onClick={() => navigate('/motoboy/entregas')}
           className={`px-4 py-2 rounded-md transition ${
@@ -129,13 +141,13 @@ export default function HeaderMotoboy({ activeTab, onLogout }) {
               : 'hover:bg-gray-200'
           }`}
         >
-          Entregas
+          Minhas Entregas
         </button>
       </nav>
 
       {/* LOGOUT DESKTOP */}
       <button
-        onClick={onLogout}
+        onClick={handleLogout}
         className="hidden md:inline-block bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition"
       >
         Sair

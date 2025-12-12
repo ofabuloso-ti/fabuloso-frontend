@@ -4,6 +4,17 @@ import djangoApi from '../../api/djangoApi';
 import AtendenteHeader from './AtendenteHeader';
 import { useLocation } from 'react-router-dom';
 
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Legend,
+  CartesianGrid,
+  ResponsiveContainer,
+} from 'recharts';
+
 function AtendenteDashboard({ user, onLogout, initialTab = 'dashboard' }) {
   const [activeTab, setActiveTab] = useState(initialTab);
   const [loading, setLoading] = useState(true);
@@ -40,6 +51,56 @@ function AtendenteDashboard({ user, onLogout, initialTab = 'dashboard' }) {
   }, []);
 
   /* -------------------------------------------------------------------------- */
+  /*                                GRÁFICO                                     */
+  /* -------------------------------------------------------------------------- */
+
+  const entregasConcluidas = entregas.filter(
+    (e) =>
+      e.status === 'concluida' &&
+      String(e.loja) === String(lojaID) &&
+      e.data_criacao,
+  );
+
+  // Agrupamento por data e motoboy
+  const dataAgrupada = {};
+
+  entregasConcluidas.forEach((e) => {
+    const dia = e.data_criacao;
+    const motoboy = e.motoboy_nome || 'Motoboy';
+
+    if (!dataAgrupada[dia]) dataAgrupada[dia] = {};
+
+    if (!dataAgrupada[dia][motoboy]) {
+      dataAgrupada[dia][motoboy] = 0;
+    }
+
+    dataAgrupada[dia][motoboy] += 1;
+  });
+
+  // Converte para array compatível com Recharts
+  const chartData = Object.keys(dataAgrupada).map((dia) => ({
+    date: dia,
+    ...dataAgrupada[dia],
+  }));
+
+  // Lista de nomes dos motoboys que aparecerão como linhas
+  const motoboysUnicos = [
+    ...new Set(entregasConcluidas.map((e) => e.motoboy_nome)),
+  ];
+
+  // Cores fixas para não trocar a cada render
+  const cores = [
+    '#00bcd4',
+    '#4caf50',
+    '#ff9800',
+    '#e91e63',
+    '#3f51b5',
+    '#009688',
+    '#9c27b0',
+    '#f44336',
+  ];
+
+  /* -------------------------------------------------------------------------- */
   /*                                FILTRAGENS                                  */
   /* -------------------------------------------------------------------------- */
   const entregasFiltradas = entregas
@@ -54,6 +115,9 @@ function AtendenteDashboard({ user, onLogout, initialTab = 'dashboard' }) {
       motoboyFilter ? String(e.motoboy) === String(motoboyFilter) : true,
     );
 
+  /* -------------------------------------------------------------------------- */
+  /*                Atualizar aba ao trocar rota (dashboard/entregas)          */
+  /* -------------------------------------------------------------------------- */
   useEffect(() => {
     if (location.pathname.includes('/atendente/entregas')) {
       setActiveTab('entregas');
@@ -69,7 +133,7 @@ function AtendenteDashboard({ user, onLogout, initialTab = 'dashboard' }) {
     <div>
       <AtendenteHeader onLogout={onLogout} />
 
-      <div className="p-6 max-w-5xl mx-auto">
+      <div className="p-6 max-w-6xl mx-auto">
         <h1 className="text-3xl font-bold text-[#d20000] mb-6">
           {activeTab === 'dashboard'
             ? 'Painel do Atendente'
@@ -81,7 +145,40 @@ function AtendenteDashboard({ user, onLogout, initialTab = 'dashboard' }) {
         ) : (
           <>
             {/* ------------------------------ DASHBOARD ------------------------------ */}
-            {activeTab === 'dashboard' && <p>Resumo do atendente aqui…</p>}
+            {activeTab === 'dashboard' && (
+              <div className="bg-white p-6 rounded-xl shadow mb-8">
+                <h2 className="text-xl font-bold mb-4 text-[#d20000]">
+                  Entregas Concluídas por Dia
+                </h2>
+
+                {chartData.length === 0 ? (
+                  <p className="text-gray-600 text-center pt-4">
+                    Nenhuma entrega concluída ainda.
+                  </p>
+                ) : (
+                  <ResponsiveContainer width="100%" height={350}>
+                    <LineChart data={chartData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="date" />
+                      <YAxis allowDecimals={false} />
+                      <Tooltip />
+                      <Legend />
+
+                      {motoboysUnicos.map((motoboy, index) => (
+                        <Line
+                          key={motoboy}
+                          type="monotone"
+                          dataKey={motoboy}
+                          stroke={cores[index % cores.length]}
+                          strokeWidth={3}
+                          dot={{ r: 4 }}
+                        />
+                      ))}
+                    </LineChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
+            )}
 
             {/* ------------------------------- ENTREGAS ------------------------------ */}
             {activeTab === 'entregas' && (

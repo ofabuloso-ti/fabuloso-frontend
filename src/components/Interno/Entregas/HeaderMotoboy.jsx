@@ -23,28 +23,23 @@ export default function HeaderMotoboy({ onLogout }) {
   }, []);
 
   /* -------------------------------------------------------------------------- */
-  /*                               LOGOUT CORRIGIDO                             */
+  /*                                   LOGOUT                                   */
   /* -------------------------------------------------------------------------- */
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-
-    if (onLogout) onLogout(); // dispara logout do App.jsx
-
-    navigate('/login'); // redireciona corretamente
+    if (onLogout) onLogout();
+    navigate('/login');
   };
 
   /* -------------------------------------------------------------------------- */
-  /*                                  RENDER                                    */
+  /*                               RENDERIZAÇÃO                                 */
   /* -------------------------------------------------------------------------- */
   return (
     <header className="flex items-center justify-between bg-white p-4 shadow-md sticky top-0 z-50">
       <div className="flex items-center space-x-3 relative" ref={menuRef}>
-        {/* HAMBURGER MOBILE */}
-        <button
-          className="md:hidden focus:outline-none"
-          onClick={() => setMenuOpen(!menuOpen)}
-        >
+        {/* HAMBURGUER MOBILE */}
+        <button className="md:hidden" onClick={() => setMenuOpen(!menuOpen)}>
           {menuOpen ? (
             <svg
               className="w-7 h-7 text-[#d20000]"
@@ -74,21 +69,22 @@ export default function HeaderMotoboy({ onLogout }) {
           )}
         </button>
 
-        {/* LOGO */}
-        <Link to="/motoboy">
+        {/* LOGO → deve ir para home */}
+        <Link to="/">
           <img src={logoDesktop} alt="Logo" className="h-12 cursor-pointer" />
         </Link>
 
         {/* MENU MOBILE */}
         {menuOpen && (
           <nav className="absolute top-14 left-0 w-56 bg-white shadow-lg rounded-md flex flex-col py-2 md:hidden z-50">
+            {/* Dashboard */}
             <button
               onClick={() => {
-                navigate('/motoboy');
+                navigate('/motoboy?view=dashboard');
                 setMenuOpen(false);
               }}
               className={`px-4 py-2 text-left ${
-                location.pathname === '/motoboy'
+                location.search.includes('view=dashboard')
                   ? 'bg-[#d20000] text-white'
                   : 'hover:bg-gray-100'
               }`}
@@ -96,17 +92,22 @@ export default function HeaderMotoboy({ onLogout }) {
               Dashboard
             </button>
 
+            {/* Entregas */}
             <button
-              onClick={() => navigate('/motoboy')}
-              className={`px-4 py-2 rounded-md transition ${
-                location.pathname === '/motoboy'
+              onClick={() => {
+                navigate('/motoboy?view=entregas');
+                setMenuOpen(false);
+              }}
+              className={`px-4 py-2 text-left ${
+                location.search.includes('view=entregas')
                   ? 'bg-[#d20000] text-white'
-                  : 'hover:bg-gray-200'
+                  : 'hover:bg-gray-100'
               }`}
             >
-              Entregas
+              Minhas Entregas
             </button>
 
+            {/* Logout */}
             <button
               onClick={handleLogout}
               className="px-4 py-2 text-left text-red-600 hover:bg-gray-100"
@@ -120,9 +121,9 @@ export default function HeaderMotoboy({ onLogout }) {
       {/* MENU DESKTOP */}
       <nav className="hidden md:flex space-x-6 font-semibold text-gray-700">
         <button
-          onClick={() => navigate('/motoboy')}
+          onClick={() => navigate('/motoboy?view=dashboard')}
           className={`px-4 py-2 rounded-md transition ${
-            location.pathname === '/motoboy'
+            location.search.includes('view=dashboard')
               ? 'bg-[#d20000] text-white'
               : 'hover:bg-gray-200'
           }`}
@@ -131,9 +132,9 @@ export default function HeaderMotoboy({ onLogout }) {
         </button>
 
         <button
-          onClick={() => navigate('/motoboy/entregas')}
+          onClick={() => navigate('/motoboy?view=entregas')}
           className={`px-4 py-2 rounded-md transition ${
-            location.pathname.includes('/motoboy/entregas')
+            location.search.includes('view=entregas')
               ? 'bg-[#d20000] text-white'
               : 'hover:bg-gray-200'
           }`}

@@ -233,18 +233,14 @@ function App() {
       <Route
         path="/login"
         element={
-          user ? (
-            <Navigate to="/" />
-          ) : (
-            <>
-              <div className="desktop-view">
-                <LoginPageDesktop onLogin={handleLogin} error={error} />
-              </div>
-              <div className="mobile-view">
-                <LoginPageMobile onLogin={handleLogin} error={error} />
-              </div>
-            </>
-          )
+          <>
+            <div className="desktop-view">
+              <LoginPageDesktop onLogin={handleLogin} error={error} />
+            </div>
+            <div className="mobile-view">
+              <LoginPageMobile onLogin={handleLogin} error={error} />
+            </div>
+          </>
         }
       />
 

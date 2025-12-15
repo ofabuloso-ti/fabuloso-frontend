@@ -9,12 +9,6 @@ import {
   useParams,
 } from 'react-router-dom';
 import djangoApi from './api/djangoApi';
-// REMOVE ISSO
-import {
-  LoginPageDesktop,
-  LoginPageMobile,
-} from './components/Interno/LoginPage';
-
 // USA ISSO
 import LoginPage from './components/Interno/LoginPage';
 
@@ -30,9 +24,6 @@ import FuncionarioForm from './components/Interno/FuncionarioForm';
 // Entregas
 import ListaEntregas from './components/Interno/Entregas/ListaEntregas';
 import MotoboyDashboard from './components/Interno/Entregas/MotoboyDashboard';
-
-// Login
-import LoginPage from './components/Interno/LoginPage';
 
 // Landing
 import Home from './components/Landing/Home';

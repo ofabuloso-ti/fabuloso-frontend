@@ -1,29 +1,38 @@
-// src/components/LoginPage.jsx
-import React from 'react';
-import LoginForm from './LoginForm';
-import logoDesktop from '/assets/home/logo.png';
-import { Link } from 'react-router-dom';
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../hooks/useAuth';
 
-export const LoginPageDesktop = ({ onLogin, error }) => (
-  <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
-    <Link to="/home">
-      <img
-        src={logoDesktop}
-        alt="Logo Good Mais Coxinhas"
-        className="h-20 mb-8"
-      />
-    </Link>
-    <LoginForm onLogin={onLogin} error={error} />
-  </div>
-);
+export const LoginPageDesktop = () => {
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
 
-export const LoginPageMobile = ({ onLogin, error }) => (
-  <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
-    <img
-      src={logoDesktop}
-      alt="Logo Good Mais Coxinhas"
-      className="h-16 mb-6"
-    />
-    <LoginForm onLogin={onLogin} error={error} />
-  </div>
-);
+  useEffect(() => {
+    if (loading) return;
+
+    if (user) {
+      switch (user.user_type) {
+        case 'admin':
+          navigate('/admin');
+          break;
+        case 'motoboy':
+          navigate('/motoboy');
+          break;
+        case 'atendente':
+          navigate('/AtendenteDashboard');
+          break;
+        default:
+          navigate('/interno');
+      }
+    }
+  }, [user, loading, navigate]);
+
+  if (loading) {
+    return <div className="min-h-screen bg-white" />;
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <LoginForm />
+    </div>
+  );
+};

@@ -32,10 +32,7 @@ import ListaEntregas from './components/Interno/Entregas/ListaEntregas';
 import MotoboyDashboard from './components/Interno/Entregas/MotoboyDashboard';
 
 // Login
-import {
-  LoginPageDesktop,
-  LoginPageMobile,
-} from './components/Interno/LoginPage';
+import LoginPage from './components/Interno/LoginPage';
 
 // Landing
 import Home from './components/Landing/Home';

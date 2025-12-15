@@ -5,7 +5,10 @@ import logoDesktop from '/assets/home/logo.png';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 
-const LoginPageDesktop = () => (
+// ======================
+// DESKTOP
+// ======================
+export const LoginPageDesktop = () => (
   <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
     <Link to="/home">
       <img
@@ -18,7 +21,10 @@ const LoginPageDesktop = () => (
   </div>
 );
 
-const LoginPageMobile = () => (
+// ======================
+// MOBILE
+// ======================
+export const LoginPageMobile = () => (
   <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
     <img
       src={logoDesktop}
@@ -29,6 +35,9 @@ const LoginPageMobile = () => (
   </div>
 );
 
+// ======================
+// PAGE (DEFAULT)
+// ======================
 const LoginPage = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();

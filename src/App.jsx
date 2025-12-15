@@ -9,6 +9,14 @@ import {
   useParams,
 } from 'react-router-dom';
 import djangoApi from './api/djangoApi';
+// REMOVE ISSO
+import {
+  LoginPageDesktop,
+  LoginPageMobile,
+} from './components/Interno/LoginPage';
+
+// USA ISSO
+import LoginPage from './components/Interno/LoginPage';
 
 // Interno
 import DashboardAtendente from './components/Atendente/AtendenteDashboard';
@@ -62,7 +70,13 @@ function RelatorioFormWrapper({ isEdit }) {
     load();
   }, [isEdit, id]);
 
-  if (loading) return <div className="loading-container">Carregando...</div>;
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <span className="text-gray-500">Carregando…</span>
+      </div>
+    );
+  }
 
   return (
     <RelatorioDiarioForm
@@ -107,7 +121,13 @@ function LojaFormWrapper({ isEdit }) {
     load();
   }, [isEdit, id]);
 
-  if (loading) return <div className="loading-container">Carregando...</div>;
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <span className="text-gray-500">Carregando…</span>
+      </div>
+    );
+  }
 
   return (
     <LojaForm
@@ -214,33 +234,7 @@ function App() {
       <Route path="/revendas" element={<Revendas />} />
 
       {/* Login */}
-      <Route
-        path="/login"
-        element={
-          user ? (
-            <Navigate
-              to={
-                user.user_type === 'admin'
-                  ? '/admin'
-                  : user.user_type === 'motoboy'
-                  ? '/motoboy'
-                  : user.user_type === 'atendente'
-                  ? '/atendente'
-                  : '/funcionario'
-              }
-            />
-          ) : (
-            <>
-              <div className="desktop-view">
-                <LoginPageDesktop onLogin={handleLogin} error={error} />
-              </div>
-              <div className="mobile-view">
-                <LoginPageMobile onLogin={handleLogin} error={error} />
-              </div>
-            </>
-          )
-        }
-      />
+      <Route path="/login" element={<LoginPage />} />
 
       {/* ----------------------------- ENTREGAS ----------------------------- */}
 

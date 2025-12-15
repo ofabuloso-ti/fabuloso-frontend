@@ -1,14 +1,10 @@
 // src/components/LoginPage.jsx
-import React, { useEffect } from 'react';
+import React from 'react';
 import LoginForm from './LoginForm';
 import logoDesktop from '/assets/home/logo.png';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../hooks/useAuth';
+import { Link } from 'react-router-dom';
 
-// ======================
-// DESKTOP
-// ======================
-export const LoginPageDesktop = () => (
+export const LoginPageDesktop = ({ onLogin, error }) => (
   <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
     <Link to="/home">
       <img
@@ -17,60 +13,17 @@ export const LoginPageDesktop = () => (
         className="h-20 mb-8"
       />
     </Link>
-    <LoginForm />
+    <LoginForm onLogin={onLogin} error={error} />
   </div>
 );
 
-// ======================
-// MOBILE
-// ======================
-export const LoginPageMobile = () => (
+export const LoginPageMobile = ({ onLogin, error }) => (
   <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
     <img
       src={logoDesktop}
       alt="Logo Good Mais Coxinhas"
       className="h-16 mb-6"
     />
-    <LoginForm />
+    <LoginForm onLogin={onLogin} error={error} />
   </div>
 );
-
-// ======================
-// PAGE (DEFAULT)
-// ======================
-const LoginPage = () => {
-  const { user, loading } = useAuth();
-  const navigate = useNavigate();
-
-  // 🔐 Redireciona automaticamente se já estiver logado
-  useEffect(() => {
-    if (loading) return;
-
-    if (user) {
-      switch (user.user_type) {
-        case 'admin':
-          navigate('/admin', { replace: true });
-          break;
-        case 'motoboy':
-          navigate('/motoboy', { replace: true });
-          break;
-        case 'atendente':
-          navigate('/AtendenteDashboard', { replace: true });
-          break;
-        default:
-          navigate('/interno', { replace: true });
-      }
-    }
-  }, [user, loading, navigate]);
-
-  // 🕓 Evita tela preta no PWA
-  if (loading) {
-    return <div className="min-h-screen bg-white" />;
-  }
-
-  const isMobile = window.innerWidth < 768;
-
-  return isMobile ? <LoginPageMobile /> : <LoginPageDesktop />;
-};
-
-export default LoginPage;

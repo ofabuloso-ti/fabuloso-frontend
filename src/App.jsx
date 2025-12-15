@@ -9,12 +9,9 @@ import {
   useParams,
 } from 'react-router-dom';
 import djangoApi from './api/djangoApi';
-// USA ISSO
-import LoginPage from './components/Interno/LoginPage';
 
 // Interno
 import DashboardAtendente from './components/Atendente/AtendenteDashboard';
-import AtendenteEntregas from './components/Atendente/AtendenteHeader';
 import FuncionarioDashboard from './components/Interno/FuncionarioDashboard';
 import AdminDashboard from './components/Interno/AdminDashboard';
 import RelatorioDiarioForm from './components/Interno/RelatorioDiarioForm';
@@ -24,6 +21,12 @@ import FuncionarioForm from './components/Interno/FuncionarioForm';
 // Entregas
 import ListaEntregas from './components/Interno/Entregas/ListaEntregas';
 import MotoboyDashboard from './components/Interno/Entregas/MotoboyDashboard';
+
+// Login
+import {
+  LoginPageDesktop,
+  LoginPageMobile,
+} from './components/Interno/LoginPage';
 
 // Landing
 import Home from './components/Landing/Home';
@@ -39,8 +42,8 @@ import Revendas from './components/Landing/Revendas';
 function RelatorioFormWrapper({ isEdit }) {
   const navigate = useNavigate();
   const { id } = useParams();
-  const [relatorio, setRelatorio] = React.useState(null);
-  const [loading, setLoading] = React.useState(isEdit);
+  const [relatorio, setRelatorio] = useState(null);
+  const [loading, setLoading] = useState(isEdit);
 
   useEffect(() => {
     const load = async () => {
@@ -48,8 +51,6 @@ function RelatorioFormWrapper({ isEdit }) {
         try {
           const res = await djangoApi.get(`/relatorios-diarios/${id}/`);
           setRelatorio(res.data);
-        } catch {
-          setRelatorio(null);
         } finally {
           setLoading(false);
         }
@@ -61,7 +62,7 @@ function RelatorioFormWrapper({ isEdit }) {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
-        <span className="text-gray-500">Carregando…</span>
+        Carregando…
       </div>
     );
   }
@@ -92,8 +93,8 @@ function RelatorioFormFuncionarioWrapper({ currentUserLojaId }) {
 function LojaFormWrapper({ isEdit }) {
   const navigate = useNavigate();
   const { id } = useParams();
-  const [loja, setLoja] = React.useState(null);
-  const [loading, setLoading] = React.useState(isEdit);
+  const [loja, setLoja] = useState(null);
+  const [loading, setLoading] = useState(isEdit);
 
   useEffect(() => {
     const load = async () => {
@@ -112,7 +113,7 @@ function LojaFormWrapper({ isEdit }) {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
-        <span className="text-gray-500">Carregando…</span>
+        Carregando…
       </div>
     );
   }
@@ -129,9 +130,8 @@ function LojaFormWrapper({ isEdit }) {
 function FuncionarioFormWrapper({ isEdit }) {
   const navigate = useNavigate();
   const { id } = useParams();
-
-  const [funcionario, setFuncionario] = React.useState(null);
-  const [loading, setLoading] = React.useState(isEdit);
+  const [funcionario, setFuncionario] = useState(null);
+  const [loading, setLoading] = useState(isEdit);
 
   useEffect(() => {
     const load = async () => {
@@ -139,8 +139,6 @@ function FuncionarioFormWrapper({ isEdit }) {
         try {
           const res = await djangoApi.get(`/users/${id}/`);
           setFuncionario(res.data);
-        } catch {
-          setFuncionario(null);
         } finally {
           setLoading(false);
         }
@@ -149,7 +147,13 @@ function FuncionarioFormWrapper({ isEdit }) {
     load();
   }, [isEdit, id]);
 
-  if (loading) return <div className="loading-container">Carregando...</div>;
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        Carregando…
+      </div>
+    );
+  }
 
   return (
     <FuncionarioForm
@@ -159,19 +163,22 @@ function FuncionarioFormWrapper({ isEdit }) {
     />
   );
 }
+
 /* -------------------------------------------------------------------------- */
-/*                                APP PRINCIPAL                                */
+/*                                APP                                          */
 /* -------------------------------------------------------------------------- */
+
 function App() {
   const [user, setUser] = useState(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
+  // 🔑 Verifica sessão ao abrir app
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await djangoApi.get('auth/current_user/');
+        const res = await djangoApi.get('/auth/current_user/');
         setUser(res.data);
       } catch {
         setUser(null);
@@ -185,11 +192,10 @@ function App() {
   const handleLogin = async (username, password) => {
     setError('');
     try {
-      const res = await djangoApi.post('auth/login/', { username, password });
+      const res = await djangoApi.post('/auth/login/', { username, password });
       setUser(res.data);
-      console.log('TIPO RECEBIDO:', res.data.user_type);
 
-      const tipo = res.data.user_type?.trim().toLowerCase();
+      const tipo = res.data.user_type?.toLowerCase();
 
       if (tipo === 'admin') navigate('/admin');
       else if (tipo === 'motoboy') navigate('/motoboy');
@@ -201,16 +207,18 @@ function App() {
   };
 
   const handleLogout = async () => {
-    try {
-      await djangoApi.post('auth/logout/');
-      setUser(null);
-      navigate('/login');
-    } catch {
-      setError('Erro ao tentar fazer logout.');
-    }
+    await djangoApi.post('/auth/logout/');
+    setUser(null);
+    navigate('/login');
   };
 
-  if (loading) return <div className="loading-container">Carregando...</div>;
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        Carregando…
+      </div>
+    );
+  }
 
   return (
     <Routes>
@@ -222,11 +230,25 @@ function App() {
       <Route path="/revendas" element={<Revendas />} />
 
       {/* Login */}
-      <Route path="/login" element={<LoginPage />} />
+      <Route
+        path="/login"
+        element={
+          user ? (
+            <Navigate to="/" />
+          ) : (
+            <>
+              <div className="desktop-view">
+                <LoginPageDesktop onLogin={handleLogin} error={error} />
+              </div>
+              <div className="mobile-view">
+                <LoginPageMobile onLogin={handleLogin} error={error} />
+              </div>
+            </>
+          )
+        }
+      />
 
-      {/* ----------------------------- ENTREGAS ----------------------------- */}
-
-      {/* Lista de pedidos (funcionário + atendente) */}
+      {/* Entregas */}
       <Route
         path="/entregas"
         element={
@@ -240,11 +262,10 @@ function App() {
         }
       />
 
-      {/* Painel Motoboy */}
       <Route
         path="/motoboy"
         element={
-          user && user.user_type === 'motoboy' ? (
+          user?.user_type === 'motoboy' ? (
             <MotoboyDashboard user={user} onLogout={handleLogout} />
           ) : (
             <Navigate to="/login" />
@@ -252,12 +273,22 @@ function App() {
         }
       />
 
-      {/* ---------------------------- RELATÓRIOS ----------------------------- */}
+      {/* Admin */}
+      <Route
+        path="/admin"
+        element={
+          user?.user_type === 'admin' ? (
+            <AdminDashboard user={user} onLogout={handleLogout} />
+          ) : (
+            <Navigate to="/login" />
+          )
+        }
+      />
 
       <Route
         path="/relatorio/novo"
         element={
-          user && user.user_type === 'admin' ? (
+          user?.user_type === 'admin' ? (
             <RelatorioFormWrapper isEdit={false} />
           ) : (
             <Navigate to="/login" />
@@ -268,8 +299,8 @@ function App() {
       <Route
         path="/relatorio/editar/:id"
         element={
-          user && user.user_type === 'admin' ? (
-            <RelatorioFormWrapper isEdit={true} />
+          user?.user_type === 'admin' ? (
+            <RelatorioFormWrapper isEdit />
           ) : (
             <Navigate to="/login" />
           )
@@ -279,7 +310,7 @@ function App() {
       <Route
         path="/relatorio"
         element={
-          user && user.user_type === 'funcionario' ? (
+          user?.user_type === 'funcionario' ? (
             <RelatorioFormFuncionarioWrapper currentUserLojaId={user.loja} />
           ) : (
             <Navigate to="/login" />
@@ -287,76 +318,16 @@ function App() {
         }
       />
 
-      {/* ------------------------------ ADMIN ------------------------------- */}
-
-      <Route
-        path="/admin"
-        element={
-          user && user.user_type === 'admin' ? (
-            <AdminDashboard user={user} onLogout={handleLogout} />
-          ) : (
-            <Navigate to="/login" />
-          )
-        }
-      />
-
-      <Route
-        path="/loja/novo"
-        element={
-          user && user.user_type === 'admin' ? (
-            <LojaFormWrapper isEdit={false} />
-          ) : (
-            <Navigate to="/login" />
-          )
-        }
-      />
-
-      <Route
-        path="/loja/editar/:id"
-        element={
-          user && user.user_type === 'admin' ? (
-            <LojaFormWrapper isEdit={true} />
-          ) : (
-            <Navigate to="/login" />
-          )
-        }
-      />
-
-      <Route
-        path="/funcionario/novo"
-        element={
-          user && user.user_type === 'admin' ? (
-            <FuncionarioFormWrapper isEdit={false} />
-          ) : (
-            <Navigate to="/login" />
-          )
-        }
-      />
-
-      <Route
-        path="/funcionario/editar/:id"
-        element={
-          user && user.user_type === 'admin' ? (
-            <FuncionarioFormWrapper isEdit={true} />
-          ) : (
-            <Navigate to="/login" />
-          )
-        }
-      />
-
-      {/* Dashboard Funcionário */}
       <Route
         path="/funcionario"
         element={
-          user && user.user_type === 'funcionario' ? (
+          user?.user_type === 'funcionario' ? (
             <FuncionarioDashboard user={user} onLogout={handleLogout} />
           ) : (
             <Navigate to="/login" />
           )
         }
       />
-
-      {/* ----------------------------- ATENDENTE ----------------------------- */}
 
       <Route
         path="/atendente"
@@ -369,39 +340,9 @@ function App() {
         }
       />
 
-      <Route
-        path="/atendente/dashboard"
-        element={
-          user?.user_type === 'atendente' ? (
-            <DashboardAtendente
-              initialTab="dashboard"
-              user={user}
-              onLogout={handleLogout}
-            />
-          ) : (
-            <Navigate to="/login" />
-          )
-        }
-      />
-
-      <Route
-        path="/atendente/entregas"
-        element={
-          user?.user_type === 'atendente' ? (
-            <DashboardAtendente
-              initialTab="entregas"
-              user={user}
-              onLogout={handleLogout}
-            />
-          ) : (
-            <Navigate to="/login" />
-          )
-        }
-      />
-
-      {/* Fallback */}
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>
   );
 }
+
 export default App;

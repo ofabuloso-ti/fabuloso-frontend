@@ -1,19 +1,52 @@
 // src/components/LoginForm.jsx
 import React, { useState } from 'react';
+import { useAuth } from '../../hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
 
-const LoginForm = ({ onLogin, error }) => {
+const LoginForm = () => {
+  const { login, error } = useAuth();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
 
     try {
-      await onLogin(username, password);
-    } finally {
-      setLoading(false);
+      // login retorna o usuário logado!
+      const usuario = await login(username, password);
+
+      console.log('Usuário logado:', usuario);
+
+      // REDIRECIONAMENTO POR TIPO DE USUÁRIO
+      if (!usuario?.user_type) {
+        console.warn('Usuário sem user_type, enviando para /interno');
+        return navigate('/interno');
+      }
+
+      // REDIRECIONAMENTO POR TIPO DE USUÁRIO
+      switch (usuario.user_type) {
+        case 'admin':
+          navigate('/admin');
+          break;
+
+        case 'motoboy':
+          navigate('/motoboy');
+          break;
+
+        case 'atendente':
+          navigate('/AtendenteDashboard');
+          break;
+
+        case 'funcionario':
+          navigate('/interno');
+          break;
+
+        default:
+          navigate('/interno');
+      }
+    } catch (err) {
+      console.error('Falha no login', err);
     }
   };
 
@@ -26,22 +59,36 @@ const LoginForm = ({ onLogin, error }) => {
         Acesso
       </h2>
 
-      <label className="block text-gray-700 font-semibold mb-2">Usuário</label>
+      <label
+        htmlFor="username"
+        className="block text-gray-700 font-semibold mb-2"
+      >
+        Usuário
+      </label>
       <input
+        id="username"
         type="text"
         value={username}
         onChange={(e) => setUsername(e.target.value)}
         required
-        className="w-full px-4 py-2 mb-4 border rounded"
+        placeholder="Digite seu usuário"
+        className="w-full px-4 py-2 mb-4 border border-gray-300 rounded"
       />
 
-      <label className="block text-gray-700 font-semibold mb-2">Senha</label>
+      <label
+        htmlFor="password"
+        className="block text-gray-700 font-semibold mb-2"
+      >
+        Senha
+      </label>
       <input
+        id="password"
         type="password"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
         required
-        className="w-full px-4 py-2 mb-4 border rounded"
+        placeholder="Digite sua senha"
+        className="w-full px-4 py-2 mb-4 border border-gray-300 rounded"
       />
 
       {error && (
@@ -50,10 +97,9 @@ const LoginForm = ({ onLogin, error }) => {
 
       <button
         type="submit"
-        disabled={loading}
-        className="w-full bg-[#d20000] text-white py-3 rounded"
+        className="w-full bg-[#d20000] text-white py-3 rounded hover:bg-[#c70d0d] transition"
       >
-        {loading ? 'Entrando...' : 'Entrar'}
+        Entrar
       </button>
     </form>
   );

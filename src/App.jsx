@@ -182,24 +182,21 @@ function App() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    let mounted = true;
-
     const load = async () => {
       try {
-        const res = await djangoApi.get('auth/current_user/');
-        if (mounted) setUser(res.data);
-      } catch {
-        if (mounted) setUser(null);
+        const res = await djangoApi.get('auth/current_user/', {
+          timeout: 5000, // 🔥 ISSO MUDA TUDO
+        });
+        setUser(res.data);
+      } catch (err) {
+        console.warn('⚠️ Não autenticado ou API indisponível');
+        setUser(null);
       } finally {
-        if (mounted) setLoading(false);
+        setLoading(false); // 🔥 SEMPRE EXECUTA
       }
     };
 
     load();
-
-    return () => {
-      mounted = false;
-    };
   }, []);
 
   const handleLogin = async (username, password) => {

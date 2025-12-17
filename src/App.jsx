@@ -213,6 +213,19 @@ function App() {
     return (
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route
+          path="/login"
+          element={
+            <>
+              <div className="desktop-view">
+                <LoginPageDesktop onLogin={handleLogin} error={error} />
+              </div>
+              <div className="mobile-view">
+                <LoginPageMobile onLogin={handleLogin} error={error} />
+              </div>
+            </>
+          }
+        />
         <Route path="*" element={<div>Carregando…</div>} />
       </Routes>
     );

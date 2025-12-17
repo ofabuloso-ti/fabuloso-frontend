@@ -202,7 +202,12 @@ function App() {
   const handleLogin = async (username, password) => {
     setError('');
     try {
-      const res = await djangoApi.post('auth/login/', { username, password });
+      const res = await djangoApi.post(
+        'auth/login/',
+        { username, password },
+        { timeout: 8000 }, // 🔥 OBRIGATÓRIO
+      );
+
       setUser(res.data);
       console.log('TIPO RECEBIDO:', res.data.user_type);
 

@@ -62,7 +62,28 @@ function RelatorioFormWrapper({ isEdit }) {
     load();
   }, [isEdit, id]);
 
-  if (loading) return <div className="loading-container">Carregando...</div>;
+  if (loading) {
+    // enquanto verifica auth, deixa rotas públicas funcionarem
+    return (
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route
+          path="/login"
+          element={
+            <>
+              <div className="desktop-view">
+                <LoginPageDesktop onLogin={handleLogin} error={error} />
+              </div>
+              <div className="mobile-view">
+                <LoginPageMobile onLogin={handleLogin} error={error} />
+              </div>
+            </>
+          }
+        />
+        <Route path="*" element={<Home />} />
+      </Routes>
+    );
+  }
 
   return (
     <RelatorioDiarioForm
@@ -163,21 +184,30 @@ function App() {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await djangoApi.get('auth/current_user/');
+        const res = await djangoApi.get('auth/current_user/', {
+          timeout: 5000, // 🔥 ISSO MUDA TUDO
+        });
         setUser(res.data);
-      } catch {
+      } catch (err) {
+        console.warn('⚠️ Não autenticado ou API indisponível');
         setUser(null);
       } finally {
-        setLoading(false);
+        setLoading(false); // 🔥 SEMPRE EXECUTA
       }
     };
+
     load();
   }, []);
 
   const handleLogin = async (username, password) => {
     setError('');
     try {
-      const res = await djangoApi.post('auth/login/', { username, password });
+      const res = await djangoApi.post(
+        'auth/login/',
+        { username, password },
+        { timeout: 8000 }, // 🔥 OBRIGATÓRIO
+      );
+
       setUser(res.data);
       console.log('TIPO RECEBIDO:', res.data.user_type);
 
@@ -202,7 +232,27 @@ function App() {
     }
   };
 
-  if (loading) return <div className="loading-container">Carregando...</div>;
+  if (loading) {
+    return (
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route
+          path="/login"
+          element={
+            <>
+              <div className="desktop-view">
+                <LoginPageDesktop onLogin={handleLogin} error={error} />
+              </div>
+              <div className="mobile-view">
+                <LoginPageMobile onLogin={handleLogin} error={error} />
+              </div>
+            </>
+          }
+        />
+        <Route path="*" element={<div>Carregando…</div>} />
+      </Routes>
+    );
+  }
 
   return (
     <Routes>

@@ -62,7 +62,28 @@ function RelatorioFormWrapper({ isEdit }) {
     load();
   }, [isEdit, id]);
 
-  if (loading) return <div className="loading-container">Carregando...</div>;
+  if (loading) {
+    // enquanto verifica auth, deixa rotas públicas funcionarem
+    return (
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route
+          path="/login"
+          element={
+            <>
+              <div className="desktop-view">
+                <LoginPageDesktop onLogin={handleLogin} error={error} />
+              </div>
+              <div className="mobile-view">
+                <LoginPageMobile onLogin={handleLogin} error={error} />
+              </div>
+            </>
+          }
+        />
+        <Route path="*" element={<Home />} />
+      </Routes>
+    );
+  }
 
   return (
     <RelatorioDiarioForm

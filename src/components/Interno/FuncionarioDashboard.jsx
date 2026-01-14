@@ -178,7 +178,13 @@ const FuncionarioDashboard = ({ user, onLogout }) => {
         `/relatorios-diarios/${relatorioId}/`,
       );
 
-      const lojaNome = resolveLojaNome(detalhe?.loja);
+      const lojaNome =
+        typeof detalhe?.loja === 'object'
+          ? detalhe.loja.nome
+          : detalhe?.loja
+          ? `Loja #${detalhe.loja}`
+          : '—';
+
       const dataRelatorio = detalhe?.data
         ? dayjs(detalhe.data).format('DD/MM/YYYY HH:mm')
         : '—';

@@ -200,6 +200,7 @@ const FuncionarioDashboard = ({ user, onLogout }) => {
 
     return String(value);
   };
+  // trigger rebuild
 
   // ================== PDF ==================
   const gerarPdfRelatorio = async (relatorioId) => {

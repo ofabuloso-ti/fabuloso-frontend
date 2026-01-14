@@ -171,6 +171,36 @@ const FuncionarioDashboard = ({ user, onLogout }) => {
     return tipo || '—';
   };
 
+  const formatValue = (key, value) => {
+    if (value === null || value === undefined) return '—';
+
+    // datas
+    if (
+      /data|_at$/.test(key) &&
+      (typeof value === 'string' || typeof value === 'number')
+    ) {
+      return dayjs(value).isValid()
+        ? dayjs(value).format('DD/MM/YYYY HH:mm')
+        : String(value);
+    }
+
+    // dinheiro
+    if (/faturamento|valor|preco/i.test(key) && !isNaN(value)) {
+      return Number(value).toLocaleString('pt-BR', {
+        style: 'currency',
+        currency: 'BRL',
+      });
+    }
+
+    if (Array.isArray(value)) return `${value.length} item(ns)`;
+
+    if (typeof value === 'object') return JSON.stringify(value);
+
+    if (typeof value === 'boolean') return value ? 'Sim' : 'Não';
+
+    return String(value);
+  };
+
   // ================== PDF ==================
   const gerarPdfRelatorio = async (relatorioId) => {
     try {

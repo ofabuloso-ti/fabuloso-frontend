@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 // 🔧 API BASE (SEM /api)
-const DEV_API = 'http://192.168.15.7:8000';
+const DEV_API = 'https://fabuloso-backend.onrender.com';
 
 const API_BASE =
   import.meta.env.VITE_API_BASE_URL?.trim().replace(/\/$/, '') || DEV_API;

@@ -30,10 +30,12 @@ const COLORS = ['#641305', '#a8382e', '#e76f51', '#f4a261', '#2a9d8f'];
 const FuncionarioDashboard = ({ user, onLogout }) => {
   const [activeTab, setActiveTab] = useState('dashboard');
 
+  // Relatórios
   const [relatorios, setRelatorios] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Funcionários (motoboy / atendente)
   const [funcionarios, setFuncionarios] = useState([]);
   const [loadingFuncionarios, setLoadingFuncionarios] = useState(false);
   const [errorFuncionarios, setErrorFuncionarios] = useState(null);
@@ -43,22 +45,26 @@ const FuncionarioDashboard = ({ user, onLogout }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Pega aba vinda do navigate(..., { state: { tab } })
   useEffect(() => {
     if (location.state?.tab) {
       setActiveTab(location.state.tab);
     }
   }, [location]);
 
+  // Carrega relatórios ao montar
   useEffect(() => {
     fetchRelatorios();
   }, []);
 
+  // Carrega funcionários quando entra na aba Funcionários
   useEffect(() => {
     if (activeTab === 'funcionarios') {
       fetchFuncionarios();
     }
   }, [activeTab]);
 
+  // ================== RELATÓRIOS ==================
   const fetchRelatorios = async () => {
     setLoading(true);
     setError(null);
@@ -93,6 +99,7 @@ const FuncionarioDashboard = ({ user, onLogout }) => {
     });
   };
 
+  // ================== FUNCIONÁRIOS ==================
   const fetchFuncionarios = async () => {
     setLoadingFuncionarios(true);
     setErrorFuncionarios(null);
@@ -129,10 +136,12 @@ const FuncionarioDashboard = ({ user, onLogout }) => {
 
   const handleFuncionarioSalvo = (salvo) => {
     if (editFuncionario) {
+      // edição
       setFuncionarios((prev) =>
         prev.map((f) => (f.id === salvo.id ? salvo : f)),
       );
     } else {
+      // novo
       setFuncionarios((prev) => [...prev, salvo]);
     }
     setShowForm(false);
@@ -169,110 +178,219 @@ const FuncionarioDashboard = ({ user, onLogout }) => {
         `/relatorios-diarios/${relatorioId}/`,
       );
 
-      const lojaNome = detalhe?.loja?.nome || `Loja #${detalhe?.loja}`;
+      const lojaNome = resolveLojaNome(detalhe?.loja);
       const dataRelatorio = detalhe?.data
         ? dayjs(detalhe.data).format('DD/MM/YYYY HH:mm')
         : '—';
+      const responsavel = detalhe?.responsavel_username || '—';
+      const status = detalhe?.status || '—';
 
       const doc = new jsPDF();
 
+      // ---------- Cabeçalho ----------
       doc.setFillColor(100, 19, 5);
-      doc.rect(0, 0, 210, 30, 'F');
-
+      doc.rect(0, 0, 210, 28, 'F');
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(16);
       doc.text('Relatório Diário', 14, 18);
 
+      // Logo
+      const toDataURL = (url) =>
+        fetch(url)
+          .then((r) => r.blob())
+          .then(
+            (b) =>
+              new Promise((res) => {
+                const reader = new FileReader();
+                reader.onload = () => res(reader.result);
+                reader.readAsDataURL(b);
+              }),
+          );
       try {
-        const blob = await fetch(logoDesktop).then((r) => r.blob());
-        const base64 = await new Promise((res) => {
-          const reader = new FileReader();
-          reader.onload = () => res(reader.result);
-          reader.readAsDataURL(blob);
-        });
-        doc.addImage(base64, 'PNG', 170, 6, 30, 18);
+        const imgData = await toDataURL(logoDesktop);
+        doc.addImage(imgData, 'PNG', 170, 6, 30, 18);
       } catch {}
 
-      let cursorY = 42;
-
-      doc.setTextColor(0, 0, 0);
+      // ---------- Dados principais ----------
+      doc.setTextColor(40, 40, 40);
       doc.setFontSize(11);
-      doc.text(`Loja: ${lojaNome}`, 14, cursorY);
-      cursorY += 6;
-      doc.text(`Data: ${dataRelatorio}`, 14, cursorY);
-      cursorY += 10;
+      const yStart = 36;
+      doc.text(`Loja: ${lojaNome}`, 14, yStart);
+      doc.text(`Responsável: ${responsavel}`, 14, yStart + 6);
+      doc.text(`Status: ${status}`, 14, yStart + 12);
+      doc.text(`Data do Relatório: ${dataRelatorio}`, 14, yStart + 18);
+      doc.text(
+        `Gerado em: ${dayjs().format('DD/MM/YYYY HH:mm')}`,
+        14,
+        yStart + 24,
+      );
 
-      const section = (title) => {
-        doc.setFontSize(13);
-        doc.text(title, 14, cursorY);
-        cursorY += 8;
+      let cursorY = yStart + 30;
+      let lastWasTable = false;
+
+      // helpers
+      const addFooter = () => {
+        const pageH = doc.internal.pageSize.height;
+        doc.setFontSize(9);
+        doc.setTextColor(120);
+        doc.text(
+          `Relatório #${relatorioId} • ${lojaNome} • Gerado em ${dayjs().format(
+            'DD/MM/YYYY HH:mm',
+          )}`,
+          14,
+          pageH - 10,
+        );
       };
-
-      const renderTable = (head, body) => {
+      const sectionTitle = (title) => {
+        doc.setFontSize(13);
+        doc.setTextColor(0, 0, 0);
+        doc.text(title, 14, cursorY);
+        cursorY += 6;
+        lastWasTable = false;
+      };
+      const renderTable = (head, body, columnStyles) => {
         autoTable(doc, {
           startY: cursorY,
           head: [head],
           body,
-          styles: { fontSize: 10 },
+          styles: { fontSize: 10, cellPadding: 3 },
+          headStyles: { fillColor: [42, 157, 143] },
+          alternateRowStyles: { fillColor: [250, 250, 250] },
+          margin: { top: 40, bottom: 20 },
+          ...(columnStyles ? { columnStyles } : {}),
+          didDrawPage: addFooter,
         });
-        cursorY = doc.lastAutoTable.finalY + 10;
+        cursorY = doc.lastAutoTable.finalY + 8;
+        lastWasTable = true;
       };
 
-      section('Resumo');
-      renderTable(
-        ['Campo', 'Valor'],
+      // ---------- Resumo ----------
+      const possiveisResumo = [
+        ['Retiradas (porta a porta)', detalhe?.pedidos_porta],
+        ['Entregas', detalhe?.pedidos_entrega],
         [
-          ['Retiradas', detalhe.pedidos_porta],
-          ['Entregas', detalhe.pedidos_entrega],
-          ['Faturamento', detalhe.faturamento],
+          'Faturamento',
+          detalhe?.faturamento != null ? detalhe.faturamento : null,
         ],
-      );
+      ].filter(([, v]) => v !== null && v !== undefined);
 
-      if (detalhe.motoboys?.length > 0) {
-        section('Motoboys');
+      if (possiveisResumo.length > 0) {
+        sectionTitle('Resumo');
+        const linhasResumo = possiveisResumo.map(([campo, valor]) => [
+          campo,
+          formatValue(campo, valor),
+        ]);
+        renderTable(['Campo', 'Valor'], linhasResumo, {
+          0: { cellWidth: 70 },
+          1: { cellWidth: 'auto' },
+        });
+      }
+
+      // ---------- Motoboys ----------
+      const motoboys = Array.isArray(detalhe?.motoboys) ? detalhe.motoboys : [];
+      if (motoboys.length > 0) {
+        sectionTitle('Motoboys');
+        const body = motoboys.map((m) => [
+          m.nome_motoboy || '—',
+          m.quantidade_entregas ?? 0,
+          moeda(m.valor_entregas ?? 0),
+        ]);
+        renderTable(['Motoboy', 'Entregas', 'Taxa'], body);
+      }
+
+      // ---------- Não Conformidades ----------
+      const ncs = Array.isArray(detalhe?.nao_conformidades)
+        ? detalhe.nao_conformidades
+        : [];
+      if (ncs.length > 0) {
+        sectionTitle('Não Conformidades');
+        const body = ncs.map((n) => [
+          n.item_nao_conforme || '—',
+          n.detalhes || n.observacoes || '—',
+          n.quantidade ?? 0,
+        ]);
+        renderTable(['Não conformidade', 'Detalhes', 'Quantidade'], body);
+      }
+
+      // ---------- Registro de Cancelamentos ----------
+      const cancelamentos = Array.isArray(detalhe?.cancelamentos)
+        ? detalhe.cancelamentos
+        : [];
+      if (cancelamentos.length > 0) {
+        sectionTitle('Registro de Cancelamentos');
+        const body = cancelamentos.map((c) => [
+          c.motivo_cancelamento || '—',
+          c.tipo_cancelamento || '—',
+          c.gerou_prejuizo ? 'Sim' : 'Não',
+          c.valor_prejuizo ? moeda(c.valor_prejuizo) : '—',
+          c.acao_tomada || '—',
+        ]);
         renderTable(
-          ['Nome', 'Entregas', 'Taxa'],
-          detalhe.motoboys.map((m) => [
-            m.nome_motoboy,
-            m.quantidade_entregas,
-            m.valor_entregas,
-          ]),
+          [
+            'Motivo do Cancelamento',
+            'Tipo',
+            'Gerou Prejuízo?',
+            'Valor do Prejuízo',
+            'Ação Tomada / Solução',
+          ],
+          body,
+          {
+            0: { cellWidth: 50 },
+            1: { cellWidth: 25 },
+            2: { cellWidth: 25 },
+            3: { cellWidth: 35 },
+            4: { cellWidth: 'auto' },
+          },
         );
       }
 
-      if (detalhe.nao_conformidades?.length > 0) {
-        section('Não conformidades');
-        renderTable(
-          ['Item', 'Detalhes', 'Qtd'],
-          detalhe.nao_conformidades.map((n) => [
-            n.item_nao_conforme,
-            n.detalhes,
-            n.quantidade,
-          ]),
-        );
+      // ---------- Estoques ----------
+      const estoques = Array.isArray(detalhe?.estoques) ? detalhe.estoques : [];
+      if (estoques.length > 0) {
+        sectionTitle('Estoques');
+        const body = estoques.map((e) => [
+          e.item_estoque_nome || '—',
+          String(e.quantidade ?? 0),
+          e.esta_acabando ? 'Sim' : 'Não',
+        ]);
+        renderTable(['Produto', 'Quantidade', 'Acabando?'], body);
       }
 
-      if (detalhe.cancelamentos?.length > 0) {
-        section('Cancelamentos');
-        renderTable(
-          ['Motivo', 'Tipo', 'Prejuízo?', 'Valor', 'Ação'],
-          detalhe.cancelamentos.map((c) => [
-            c.motivo_cancelamento,
-            c.tipo_cancelamento,
-            c.gerou_prejuizo ? 'Sim' : 'Não',
-            c.valor_prejuizo,
-            c.acao_tomada,
-          ]),
-        );
+      // ---------- Erros ----------
+      if (detalhe?.erros_detalhes) {
+        sectionTitle('Erros');
+        doc.setFontSize(11);
+        doc.setTextColor(60);
+        const pageH = doc.internal.pageSize.height;
+        const bottom = 20;
+        const lines = doc.splitTextToSize(String(detalhe.erros_detalhes), 182);
+
+        for (const line of lines) {
+          if (cursorY > pageH - bottom) {
+            doc.addPage();
+            addFooter();
+            cursorY = 20;
+          }
+          doc.text(line, 14, cursorY);
+          cursorY += 5;
+        }
+        lastWasTable = false;
       }
 
-      doc.save(`Relatorio_${lojaNome}.pdf`);
+      if (!lastWasTable) addFooter();
+
+      const nomeArquivo = `Relatorio_${lojaNome.replace(
+        /[^\w]+/g,
+        '_',
+      )}_${dayjs().format('YYYYMMDD_HHmm')}_${relatorioId}.pdf`;
+      doc.save(nomeArquivo);
     } catch (err) {
-      console.error(err);
-      alert('Erro ao gerar PDF.');
+      console.error('Erro ao gerar PDF do relatório:', err);
+      alert('Não foi possível gerar o PDF deste relatório.');
     }
   };
 
+  // ================== FILTROS E GRÁFICOS ==================
   const relatoriosLoja = useMemo(
     () => relatorios.filter((r) => String(r.loja) === String(user.loja)),
     [relatorios, user.loja],
@@ -282,6 +400,78 @@ const FuncionarioDashboard = ({ user, onLogout }) => {
     relatoriosLoja.sort((a, b) => new Date(b.data) - new Date(a.data))[0] ||
     null;
 
+  const vendasData = useMemo(() => {
+    const dias = {};
+
+    relatoriosLoja.forEach((r) => {
+      const dia = dayjs(r.data).format('YYYY-MM-DD');
+      if (!dias[dia]) dias[dia] = { data: dia, porta: 0, entrega: 0 };
+      dias[dia].porta += Number(r.pedidos_porta) || 0;
+      dias[dia].entrega += Number(r.pedidos_entrega) || 0;
+    });
+
+    return Object.values(dias);
+  }, [relatoriosLoja]);
+
+  const cancelamentosHoje = useMemo(() => {
+    const hoje = dayjs().format('YYYY-MM-DD');
+    const mapa = {};
+
+    relatoriosLoja.forEach((rel) => {
+      if (dayjs(rel.data).format('YYYY-MM-DD') === hoje) {
+        (rel.cancelamentos || []).forEach((c) => {
+          mapa[c.tipo_cancelamento] = (mapa[c.tipo_cancelamento] || 0) + 1;
+        });
+      }
+    });
+
+    return Object.entries(mapa).map(([name, value]) => ({ name, value }));
+  }, [relatoriosLoja]);
+
+  const cancelamentosHistorico = useMemo(() => {
+    const mapa = {};
+
+    relatoriosLoja.forEach((rel) => {
+      const dia = dayjs(rel.data).format('YYYY-MM-DD');
+      mapa[dia] = mapa[dia] || { data: dia, cancelamentos: 0 };
+      mapa[dia].cancelamentos += (rel.cancelamentos || []).length;
+    });
+
+    return Object.values(mapa);
+  }, [relatoriosLoja]);
+
+  const errosHistorico = useMemo(() => {
+    const mapa = {};
+
+    relatoriosLoja.forEach((rel) => {
+      const dia = dayjs(rel.data).format('YYYY-MM-DD');
+      mapa[dia] = mapa[dia] || { data: dia, erros: 0 };
+
+      (rel.nao_conformidades || []).forEach((n) => {
+        mapa[dia].erros += Number(n.quantidade) || 0;
+      });
+    });
+
+    return Object.values(mapa);
+  }, [relatoriosLoja]);
+
+  const errosHoje = useMemo(() => {
+    const hoje = dayjs().format('YYYY-MM-DD');
+    const mapa = {};
+
+    relatoriosLoja.forEach((rel) => {
+      if (dayjs(rel.data).format('YYYY-MM-DD') === hoje) {
+        (rel.nao_conformidades || []).forEach((n) => {
+          mapa[n.item_nao_conforme] =
+            (mapa[n.item_nao_conforme] || 0) + Number(n.quantidade || 0);
+        });
+      }
+    });
+
+    return Object.entries(mapa).map(([name, value]) => ({ name, value }));
+  }, [relatoriosLoja]);
+
+  // ================== RENDER ==================
   if (loading) return <div className="p-4 text-center">Carregando...</div>;
   if (error) return <div className="p-4 text-center text-red-600">{error}</div>;
 

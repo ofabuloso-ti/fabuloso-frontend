@@ -171,10 +171,18 @@ const FuncionarioDashboard = ({ user, onLogout }) => {
     return tipo || '—';
   };
 
+  // ======= FUNÇÕES AUXILIARES (TEM QUE VIR ANTES) =======
+
+  const moeda = (v) =>
+    (Number(v) || 0).toLocaleString('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+      minimumFractionDigits: 2,
+    });
+
   const formatValue = (key, value) => {
     if (value === null || value === undefined) return '—';
 
-    // datas
     if (
       /data|_at$/.test(key) &&
       (typeof value === 'string' || typeof value === 'number')
@@ -184,23 +192,16 @@ const FuncionarioDashboard = ({ user, onLogout }) => {
         : String(value);
     }
 
-    // dinheiro
     if (/faturamento|valor|preco/i.test(key) && !isNaN(value)) {
-      return Number(value).toLocaleString('pt-BR', {
-        style: 'currency',
-        currency: 'BRL',
-      });
+      return moeda(value); // ← USA moeda
     }
 
     if (Array.isArray(value)) return `${value.length} item(ns)`;
-
     if (typeof value === 'object') return JSON.stringify(value);
-
     if (typeof value === 'boolean') return value ? 'Sim' : 'Não';
 
     return String(value);
   };
-  // trigger rebuild
 
   // ================== PDF ==================
   const gerarPdfRelatorio = async (relatorioId) => {

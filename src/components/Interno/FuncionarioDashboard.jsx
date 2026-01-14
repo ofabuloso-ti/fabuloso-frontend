@@ -30,12 +30,10 @@ const COLORS = ['#641305', '#a8382e', '#e76f51', '#f4a261', '#2a9d8f'];
 const FuncionarioDashboard = ({ user, onLogout }) => {
   const [activeTab, setActiveTab] = useState('dashboard');
 
-  // Relatórios
   const [relatorios, setRelatorios] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Funcionários (motoboy / atendente)
   const [funcionarios, setFuncionarios] = useState([]);
   const [loadingFuncionarios, setLoadingFuncionarios] = useState(false);
   const [errorFuncionarios, setErrorFuncionarios] = useState(null);
@@ -45,26 +43,22 @@ const FuncionarioDashboard = ({ user, onLogout }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Pega aba vinda do navigate(..., { state: { tab } })
   useEffect(() => {
     if (location.state?.tab) {
       setActiveTab(location.state.tab);
     }
   }, [location]);
 
-  // Carrega relatórios ao montar
   useEffect(() => {
     fetchRelatorios();
   }, []);
 
-  // Carrega funcionários quando entra na aba Funcionários
   useEffect(() => {
     if (activeTab === 'funcionarios') {
       fetchFuncionarios();
     }
   }, [activeTab]);
 
-  // ================== RELATÓRIOS ==================
   const fetchRelatorios = async () => {
     setLoading(true);
     setError(null);
@@ -99,7 +93,6 @@ const FuncionarioDashboard = ({ user, onLogout }) => {
     });
   };
 
-  // ================== FUNCIONÁRIOS ==================
   const fetchFuncionarios = async () => {
     setLoadingFuncionarios(true);
     setErrorFuncionarios(null);
@@ -136,12 +129,10 @@ const FuncionarioDashboard = ({ user, onLogout }) => {
 
   const handleFuncionarioSalvo = (salvo) => {
     if (editFuncionario) {
-      // edição
       setFuncionarios((prev) =>
         prev.map((f) => (f.id === salvo.id ? salvo : f)),
       );
     } else {
-      // novo
       setFuncionarios((prev) => [...prev, salvo]);
     }
     setShowForm(false);
@@ -184,10 +175,11 @@ const FuncionarioDashboard = ({ user, onLogout }) => {
         : '—';
 
       const doc = new jsPDF();
-      doc.setFillColor(100, 19, 5);
-      doc.rect(0, 0, 210, 28, 'F');
-      doc.setTextColor(255, 255, 255);
 
+      doc.setFillColor(100, 19, 5);
+      doc.rect(0, 0, 210, 30, 'F');
+
+      doc.setTextColor(255, 255, 255);
       doc.setFontSize(16);
       doc.text('Relatório Diário', 14, 18);
 
@@ -201,11 +193,17 @@ const FuncionarioDashboard = ({ user, onLogout }) => {
         doc.addImage(base64, 'PNG', 170, 6, 30, 18);
       } catch {}
 
-      let cursorY = 40;
+      let cursorY = 42;
+
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(11);
+      doc.text(`Loja: ${lojaNome}`, 14, cursorY);
+      cursorY += 6;
+      doc.text(`Data: ${dataRelatorio}`, 14, cursorY);
+      cursorY += 10;
 
       const section = (title) => {
         doc.setFontSize(13);
-        doc.setTextColor(0, 0, 0);
         doc.text(title, 14, cursorY);
         cursorY += 8;
       };
@@ -268,15 +266,13 @@ const FuncionarioDashboard = ({ user, onLogout }) => {
         );
       }
 
-      const nomeArquivo = `Relatorio_${lojaNome}.pdf`;
-      doc.save(nomeArquivo);
+      doc.save(`Relatorio_${lojaNome}.pdf`);
     } catch (err) {
       console.error(err);
       alert('Erro ao gerar PDF.');
     }
   };
 
-  // ================== FILTROS E GRÁFICOS ==================
   const relatoriosLoja = useMemo(
     () => relatorios.filter((r) => String(r.loja) === String(user.loja)),
     [relatorios, user.loja],
@@ -286,78 +282,6 @@ const FuncionarioDashboard = ({ user, onLogout }) => {
     relatoriosLoja.sort((a, b) => new Date(b.data) - new Date(a.data))[0] ||
     null;
 
-  const vendasData = useMemo(() => {
-    const dias = {};
-
-    relatoriosLoja.forEach((r) => {
-      const dia = dayjs(r.data).format('YYYY-MM-DD');
-      if (!dias[dia]) dias[dia] = { data: dia, porta: 0, entrega: 0 };
-      dias[dia].porta += Number(r.pedidos_porta) || 0;
-      dias[dia].entrega += Number(r.pedidos_entrega) || 0;
-    });
-
-    return Object.values(dias);
-  }, [relatoriosLoja]);
-
-  const cancelamentosHoje = useMemo(() => {
-    const hoje = dayjs().format('YYYY-MM-DD');
-    const mapa = {};
-
-    relatoriosLoja.forEach((rel) => {
-      if (dayjs(rel.data).format('YYYY-MM-DD') === hoje) {
-        (rel.cancelamentos || []).forEach((c) => {
-          mapa[c.tipo_cancelamento] = (mapa[c.tipo_cancelamento] || 0) + 1;
-        });
-      }
-    });
-
-    return Object.entries(mapa).map(([name, value]) => ({ name, value }));
-  }, [relatoriosLoja]);
-
-  const cancelamentosHistorico = useMemo(() => {
-    const mapa = {};
-
-    relatoriosLoja.forEach((rel) => {
-      const dia = dayjs(rel.data).format('YYYY-MM-DD');
-      mapa[dia] = mapa[dia] || { data: dia, cancelamentos: 0 };
-      mapa[dia].cancelamentos += (rel.cancelamentos || []).length;
-    });
-
-    return Object.values(mapa);
-  }, [relatoriosLoja]);
-
-  const errosHistorico = useMemo(() => {
-    const mapa = {};
-
-    relatoriosLoja.forEach((rel) => {
-      const dia = dayjs(rel.data).format('YYYY-MM-DD');
-      mapa[dia] = mapa[dia] || { data: dia, erros: 0 };
-
-      (rel.nao_conformidades || []).forEach((n) => {
-        mapa[dia].erros += Number(n.quantidade) || 0;
-      });
-    });
-
-    return Object.values(mapa);
-  }, [relatoriosLoja]);
-
-  const errosHoje = useMemo(() => {
-    const hoje = dayjs().format('YYYY-MM-DD');
-    const mapa = {};
-
-    relatoriosLoja.forEach((rel) => {
-      if (dayjs(rel.data).format('YYYY-MM-DD') === hoje) {
-        (rel.nao_conformidades || []).forEach((n) => {
-          mapa[n.item_nao_conforme] =
-            (mapa[n.item_nao_conforme] || 0) + Number(n.quantidade || 0);
-        });
-      }
-    });
-
-    return Object.entries(mapa).map(([name, value]) => ({ name, value }));
-  }, [relatoriosLoja]);
-
-  // ================== RENDER ==================
   if (loading) return <div className="p-4 text-center">Carregando...</div>;
   if (error) return <div className="p-4 text-center text-red-600">{error}</div>;
 

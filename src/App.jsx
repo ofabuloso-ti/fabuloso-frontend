@@ -273,10 +273,10 @@ function App() {
                 user.user_type === 'admin'
                   ? '/admin'
                   : user.user_type === 'motoboy'
-                  ? '/motoboy'
-                  : user.user_type === 'atendente'
-                  ? '/atendente'
-                  : '/funcionario'
+                    ? '/motoboy'
+                    : user.user_type === 'atendente'
+                      ? '/atendente'
+                      : '/funcionario'
               }
             />
           ) : (
@@ -299,8 +299,7 @@ function App() {
         path="/entregas"
         element={
           user &&
-          (user.user_type === 'funcionario' ||
-            user.user_type === 'atendente') ? (
+          ['funcionario', 'atendente', 'admin'].includes(user.user_type) ? (
             <ListaEntregas />
           ) : (
             <Navigate to="/login" />
